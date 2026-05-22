@@ -53,44 +53,59 @@
   gap: 1.5rem;
 }
 
-/* --- Question --- */
+/* --- Question Card --- */
 .dmun-quiz__question {
-  padding: 1rem 1.25rem;
+  background: #fff;
   border: 1px solid var(--dmun-border);
+  border-top: 4px solid var(--dmun-accent);
   border-radius: var(--dmun-radius);
-  background: var(--dmun-bg);
-  transition: border-color .2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .06);
+  padding: 0;
+  overflow: hidden;
+  transition: border-top-color .25s, box-shadow .25s;
 }
 
-.dmun-quiz__question--correct { border-color: var(--dmun-correct); background: #eafaf1; }
-.dmun-quiz__question--wrong   { border-color: var(--dmun-wrong);   background: #fdedec; }
+.dmun-quiz__question--correct {
+  border-top-color: var(--dmun-correct);
+  box-shadow: 0 2px 12px rgba(30, 132, 73, .15);
+}
+.dmun-quiz__question--wrong {
+  border-top-color: var(--dmun-wrong);
+  box-shadow: 0 2px 12px rgba(192, 57, 43, .15);
+}
 
 .dmun-quiz__question-text {
-  margin: 0 0 .75rem;
+  margin: 0;
   font-weight: 600;
+  font-size: .975rem;
   display: flex;
-  gap: .6rem;
+  gap: .75rem;
   align-items: baseline;
+  background: #f8fafc;
+  padding: .9rem 1.1rem;
+  border-bottom: 1px solid var(--dmun-border);
 }
 
 .dmun-quiz__question-num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.6em;
-  height: 1.6em;
-  min-width: 1.6em;
+  width: 1.7em;
+  height: 1.7em;
+  min-width: 1.7em;
   background: var(--dmun-accent);
   color: #fff;
   border-radius: 50%;
-  font-size: .8em;
+  font-size: .78em;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .dmun-quiz__answers {
   display: flex;
   flex-direction: column;
   gap: .5rem;
+  padding: .9rem 1.1rem;
 }
 
 /* --- Answer --- */
@@ -129,13 +144,33 @@
 .dmun-quiz__badge--err { background: var(--dmun-wrong);   color: #fff; }
 
 .dmun-quiz__explanation {
-  margin: .75rem 0 0;
-  font-size: .9rem;
-  color: #555;
-  background: #fff8e1;
-  border-left: 3px solid #f39c12;
-  padding: .5rem .75rem;
-  border-radius: 0 4px 4px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  margin: 0;
+  padding: .75rem 1.1rem;
+  background: #fde8e8;
+  border-top: 1px solid #f5b7b1;
+  color: #7b1818;
+  font-size: .875rem;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.dmun-quiz__explanation::before {
+  content: "✕";
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4em;
+  height: 1.4em;
+  background: var(--dmun-wrong);
+  color: #fff;
+  border-radius: 50%;
+  font-size: .75em;
+  font-weight: 700;
+  margin-top: .1em;
 }
 
 /* --- Buttons --- */

@@ -97,6 +97,19 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 #toast.show{opacity:1}
 #toast.ok{background:var(--ok)}#toast.err{background:var(--err)}
 
+/* ── Poll ─────────────────────────────────────────────────────────────────── */
+.poll-status{display:inline-block;padding:.15em .6em;border-radius:99px;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.poll-status--open{background:#d5f5e3;color:#1e8449}
+.poll-status--closed{background:#f5d5d5;color:#922b21}
+.poll-bar-row{margin-bottom:.85rem}
+.poll-bar-label{display:flex;justify-content:space-between;font-size:.875rem;margin-bottom:.3rem;gap:.5rem}
+.poll-bar-label span:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.poll-bar-track{height:22px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.poll-bar-fill{height:100%;background:var(--acc);border-radius:4px;transition:width .5s ease;display:flex;align-items:center;padding-left:.4rem;color:#fff;font-size:.75rem;font-weight:700;min-width:0}
+.poll-option-input{display:flex;align-items:center;gap:.5rem;background:#fff;border:1px solid var(--border);border-radius:calc(var(--radius) - 2px);padding:.5rem .75rem;margin-bottom:.4rem}
+.poll-option-input input[type=text]{flex:1;border:none;outline:none;font-size:.95rem}
+.poll-total{font-size:.85rem;color:var(--muted);margin-bottom:1.25rem}
+.poll-embed-box{background:#1e1e2e;color:#a6e3a1;padding:1rem;border-radius:var(--radius);font-family:monospace;font-size:.8rem;overflow-x:auto;white-space:pre;margin-top:.75rem}
 /* ── Meme Gallery ─────────────────────────────────────────────────────────── */
 .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--bg)}
 .upload-area:hover,.upload-area.drag-over{border-color:var(--acc);background:#eef3f8}
@@ -152,6 +165,7 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
     <button class="tab-btn" data-tab="editor">Editor</button>
     <button class="tab-btn" data-tab="results">Ergebnisse</button>
     <button class="tab-btn" data-tab="embed">Einbetten</button>
+    <button class="tab-btn" data-tab="polls">Umfragen</button>
     <button class="tab-btn" data-tab="memes">Meme-Galerie</button>
   </div>
 
@@ -225,6 +239,70 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
     </div>
   </div>
 </div>
+
+  <!-- TAB: UMFRAGEN -->
+  <div class="tab-pane" id="tab-polls">
+
+    <!-- LIST VIEW -->
+    <div id="polls-list-view">
+      <div class="toolbar">
+        <h2>Umfragen</h2>
+        <button class="btn btn-primary" id="btn-new-poll">+ Neue Umfrage</button>
+      </div>
+      <div id="poll-list" class="quiz-list"><p class="empty">Lade…</p></div>
+    </div>
+
+    <!-- EDITOR VIEW -->
+    <div id="polls-editor-view" style="display:none">
+      <div class="toolbar">
+        <h2 id="poll-editor-heading">Neue Umfrage</h2>
+        <button class="btn btn-ghost btn-sm" id="btn-cancel-poll">Abbrechen</button>
+        <button class="btn btn-success" id="btn-save-poll">Speichern</button>
+      </div>
+      <div class="card">
+        <div class="editor-section">
+          <h3>Allgemein</h3>
+          <div class="form-group">
+            <label class="label" for="poll-title">Frage / Titel *</label>
+            <input id="poll-title" type="text" placeholder="z.B. Welches UN-Organ ist am wichtigsten?">
+          </div>
+          <div class="form-group">
+            <label class="label" for="poll-desc">Beschreibung</label>
+            <textarea id="poll-desc" placeholder="Kurze Erläuterung (optional)…"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="label" for="poll-slug">Ghost-Artikel-Slug</label>
+            <input id="poll-slug" type="text" placeholder="z.B. un-organ-umfrage">
+          </div>
+          <div style="display:flex;gap:2rem;flex-wrap:wrap;margin-top:.25rem">
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+              <input type="checkbox" id="poll-multiple" style="accent-color:var(--acc)">
+              Mehrfachauswahl erlauben
+            </label>
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer">
+              <input type="checkbox" id="poll-show-before" style="accent-color:var(--acc)">
+              Ergebnisse vor Abstimmung anzeigen
+            </label>
+          </div>
+        </div>
+        <div class="editor-section">
+          <h3>Antwortmöglichkeiten</h3>
+          <div id="poll-options-container"></div>
+          <button class="btn btn-ghost mt-2" id="btn-add-poll-option">+ Option hinzufügen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS VIEW -->
+    <div id="polls-results-view" style="display:none">
+      <div class="toolbar">
+        <h2 id="poll-results-heading">Ergebnisse</h2>
+        <button class="btn btn-ghost btn-sm" id="btn-back-polls">← Zurück</button>
+      </div>
+      <div class="card" id="poll-results-card"></div>
+    </div>
+
+  </div>
 
   <!-- TAB: MEMES -->
   <div class="tab-pane" id="tab-memes">
@@ -550,6 +628,174 @@ document.getElementById("embed-quiz-select").addEventListener("change", () => {
 function esc(str) {
   const d=document.createElement("div"); d.textContent=String(str||""); return d.innerHTML;
 }
+
+/* ── Polls ───────────────────────────────────────────────────────────────── */
+let polls = [];
+let editingPollId = null;
+
+function showPollView(name) {
+  ["list","editor","results"].forEach(v =>
+    document.getElementById("polls-"+v+"-view").style.display = v === name ? "" : "none"
+  );
+}
+
+async function loadPolls() {
+  const res = await fetch(API+"/api/admin/polls", {headers:headers()});
+  polls = await res.json();
+  renderPollList();
+}
+
+function renderPollList() {
+  const el = document.getElementById("poll-list");
+  if (!polls.length) { el.innerHTML='<p class="empty">Noch keine Umfragen vorhanden</p>'; return; }
+  el.innerHTML = polls.map(p => `
+    <div class="quiz-item">
+      <div class="quiz-item-info">
+        <div class="quiz-item-title">${esc(p.title)}</div>
+        <div class="quiz-item-meta">
+          ID: ${p.id} &bull;
+          <span class="badge">${p.option_count} Optionen</span> &bull;
+          <strong>${p.total_votes}</strong> Stimmen &bull;
+          <span class="poll-status poll-status--${p.active ? 'open' : 'closed'}">${p.active ? 'Offen' : 'Geschlossen'}</span>
+          ${p.multiple ? ' &bull; Mehrfachauswahl' : ''}
+          &bull; ${new Date(p.created_at).toLocaleDateString("de-DE")}
+        </div>
+      </div>
+      <div class="quiz-item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openPollResults(${p.id})">Ergebnisse</button>
+        <button class="btn btn-ghost btn-sm" onclick="openPollEditor(${p.id})">Bearbeiten</button>
+        <button class="btn btn-ghost btn-sm" onclick="togglePoll(${p.id})" style="color:${p.active ? 'var(--err)' : 'var(--ok)'}">
+          ${p.active ? 'Schließen' : 'Öffnen'}
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deletePoll(${p.id},'${esc(p.title)}')">Löschen</button>
+      </div>
+    </div>`).join("");
+}
+
+document.getElementById("btn-new-poll").addEventListener("click", () => {
+  editingPollId = null;
+  document.getElementById("poll-editor-heading").textContent = "Neue Umfrage";
+  document.getElementById("poll-title").value = "";
+  document.getElementById("poll-desc").value = "";
+  document.getElementById("poll-slug").value = "";
+  document.getElementById("poll-multiple").checked = false;
+  document.getElementById("poll-show-before").checked = false;
+  document.getElementById("poll-options-container").innerHTML = "";
+  addPollOption(); addPollOption(); addPollOption();
+  showPollView("editor");
+});
+
+document.getElementById("btn-cancel-poll").addEventListener("click", () => showPollView("list"));
+document.getElementById("btn-back-polls").addEventListener("click", () => showPollView("list"));
+
+async function openPollEditor(id) {
+  const res = await fetch(API+"/api/admin/poll/"+id, {headers:headers()});
+  const poll = await res.json();
+  editingPollId = id;
+  document.getElementById("poll-editor-heading").textContent = "Bearbeiten: "+poll.title;
+  document.getElementById("poll-title").value = poll.title;
+  document.getElementById("poll-desc").value = poll.description || "";
+  document.getElementById("poll-slug").value = poll.ghost_slug || "";
+  document.getElementById("poll-multiple").checked = !!poll.multiple;
+  document.getElementById("poll-show-before").checked = !!poll.show_results_before_vote;
+  document.getElementById("poll-options-container").innerHTML = "";
+  poll.options.forEach(o => addPollOption(o.option_text));
+  showPollView("editor");
+}
+
+function addPollOption(text = "") {
+  const wrap = document.getElementById("poll-options-container");
+  const div = document.createElement("div");
+  div.className = "poll-option-input";
+  div.innerHTML = `
+    <span style="color:var(--muted);font-size:.8rem;min-width:1.4rem">${wrap.children.length + 1}.</span>
+    <input type="text" placeholder="Antwortmöglichkeit…" value="${esc(text)}">
+    <button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove();renumberOptions()">✕</button>`;
+  wrap.appendChild(div);
+}
+
+function renumberOptions() {
+  document.querySelectorAll("#poll-options-container .poll-option-input").forEach((el, i) => {
+    el.querySelector("span").textContent = (i+1)+".";
+  });
+}
+
+document.getElementById("btn-add-poll-option").addEventListener("click", () => addPollOption());
+
+document.getElementById("btn-save-poll").addEventListener("click", async () => {
+  const title = document.getElementById("poll-title").value.trim();
+  if (!title) { toast("Titel fehlt","err"); return; }
+  const options = [];
+  document.querySelectorAll("#poll-options-container input[type=text]").forEach(inp => {
+    const t = inp.value.trim();
+    if (t) options.push({ option_text: t });
+  });
+  if (options.length < 2) { toast("Mindestens 2 Optionen erforderlich","err"); return; }
+  const payload = {
+    title,
+    description: document.getElementById("poll-desc").value.trim(),
+    ghost_slug: document.getElementById("poll-slug").value.trim(),
+    multiple: document.getElementById("poll-multiple").checked,
+    show_results_before_vote: document.getElementById("poll-show-before").checked,
+    options
+  };
+  const url = editingPollId ? API+"/api/admin/poll/"+editingPollId : API+"/api/admin/poll";
+  const method = editingPollId ? "PUT" : "POST";
+  const res = await fetch(url, {method, headers:headers(), body:JSON.stringify(payload)});
+  if (res.ok) {
+    toast(editingPollId ? "Umfrage aktualisiert" : "Umfrage erstellt");
+    await loadPolls();
+    showPollView("list");
+  } else {
+    toast("Fehler beim Speichern","err");
+  }
+});
+
+async function togglePoll(id) {
+  const res = await fetch(API+"/api/admin/poll/"+id+"/toggle", {method:"POST", headers:headers()});
+  const data = await res.json();
+  toast(data.active ? "Umfrage geöffnet" : "Umfrage geschlossen");
+  await loadPolls();
+}
+
+async function deletePoll(id, title) {
+  if (!confirm(`Umfrage „${title}" und alle Stimmen löschen?`)) return;
+  await fetch(API+"/api/admin/poll/"+id, {method:"DELETE", headers:headers()});
+  toast("Umfrage gelöscht");
+  await loadPolls();
+}
+
+async function openPollResults(id) {
+  const res = await fetch(API+"/api/admin/poll/"+id, {headers:headers()});
+  const poll = await res.json();
+  document.getElementById("poll-results-heading").textContent = poll.title;
+  const card = document.getElementById("poll-results-card");
+  const embedCode = `<div class="dmun-poll" data-poll-id="${poll.id}" data-api-url="${API}"></div>\n<script src="${API}/static/poll-widget.js"><\/script>`;
+  card.innerHTML = `
+    <p class="poll-total">${poll.total_votes} Stimme${poll.total_votes !== 1 ? 'n' : ''} insgesamt
+      &bull; <span class="poll-status poll-status--${poll.active ? 'open':'closed'}">${poll.active ? 'Offen':'Geschlossen'}</span>
+      ${poll.multiple ? '&bull; Mehrfachauswahl' : ''}
+    </p>
+    ${poll.options.map(o => `
+      <div class="poll-bar-row">
+        <div class="poll-bar-label">
+          <span>${esc(o.option_text)}</span>
+          <span style="flex-shrink:0;font-weight:700">${o.votes} (${o.percentage}%)</span>
+        </div>
+        <div class="poll-bar-track">
+          <div class="poll-bar-fill" style="width:${o.percentage}%">${o.percentage >= 12 ? o.percentage+'%' : ''}</div>
+        </div>
+      </div>`).join("")}
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <p style="font-size:.875rem;margin-bottom:.5rem;font-weight:600">Embed-Code für Ghost:</p>
+      <div class="poll-embed-box">${esc(embedCode)}</div>
+      <button class="btn btn-ghost btn-sm mt-1" onclick="navigator.clipboard.writeText(${JSON.stringify(embedCode)}).then(()=>toast('Code kopiert'))">📋 Kopieren</button>
+    </div>`;
+  showPollView("results");
+}
+
+// Load polls when tab is opened
+document.querySelector('.tab-btn[data-tab="polls"]').addEventListener("click", loadPolls);
 
 /* ── Memes ───────────────────────────────────────────────────────────────── */
 let memes = [];

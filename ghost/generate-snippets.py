@@ -35,6 +35,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--quiz-id", default="1", help="Quiz-ID für das Embed-Snippet (Standard: 1)")
     parser.add_argument("--meme-columns", default="3", help="Spalten der Meme-Galerie (Standard: 3)")
+    parser.add_argument("--poll-id", default="1", help="Poll-ID für das Embed-Snippet (Standard: 1)")
+    parser.add_argument("--meme-upload-token", default="", help="Upload-Token (leer = kein Token)")
     args = parser.parse_args()
 
     if not ENV_FILE.exists():
@@ -103,12 +105,52 @@ def main():
 """,
     )
 
+    # --- embed-snippet-poll.html ---
+    write(
+        ROOT / "ghost" / "embed-snippet-poll.html",
+        f"""<!-- ============================================================
+     DMUN Umfrage – Embed-Snippet für einen Ghost-Artikel
+     Im Ghost-Editor: + → HTML-Karte → diesen Code einfügen.
+     data-poll-id auf die ID deiner Umfrage setzen.
+     ============================================================ -->
+
+<div class="dmun-poll"
+     data-poll-id="{args.poll_id}"
+     data-api-url="{api_url}">
+</div>
+<script src="{api_url}/static/poll-widget.js"><\/script>
+""",
+    )
+
+    # --- embed-snippet-meme-upload.html ---
+    token_attr = f'\n     data-upload-token="{args.meme_upload_token}"' if args.meme_upload_token else ""
+    write(
+        ROOT / "ghost" / "embed-snippet-meme-upload.html",
+        f"""<!-- ============================================================
+     DMUN Meme Upload + Galerie – Embed-Snippet für einen Ghost-Artikel
+     Im Ghost-Editor: + → HTML-Karte → diesen Code einfügen.
+     data-title         : Überschrift (optional)
+     data-upload-token  : Nur nötig wenn MEME_UPLOAD_TOKEN in .env gesetzt
+     data-columns       : Spalten der Galerie (Standard: 3)
+     ============================================================ -->
+
+<div class="dmun-mu"
+     data-api-url="{api_url}"
+     data-title="Meme-Galerie"{token_attr}
+     data-columns="{args.meme_columns}">
+</div>
+<script src="{api_url}/static/meme-upload-gallery.js"><\/script>
+""",
+    )
+
     print(f"""
 Fertig! Nächste Schritte:
-  1. ghost/ghost-site-header.html     → Ghost Admin → Settings → Code Injection → Site Header
-  2. ghost/embed-snippet.html         → Im Quiz-Artikel als HTML-Karte einfügen
-  3. ghost/embed-snippet-memes.html   → Im Meme-Galerie-Artikel als HTML-Karte einfügen
-  4. Memes hochladen und Embed-Code im Admin-Panel abrufen:
+  1. ghost/ghost-site-header.html        → Ghost Admin → Settings → Code Injection → Site Header
+  2. ghost/embed-snippet.html            → Im Quiz-Artikel als HTML-Karte einfügen
+  3. ghost/embed-snippet-poll.html       → Im Umfrage-Artikel als HTML-Karte einfügen
+  4. ghost/embed-snippet-memes.html      → Nur-Lese-Galerie als HTML-Karte einfügen
+  5. ghost/embed-snippet-meme-upload.html→ Upload + Galerie als HTML-Karte einfügen
+  6. Alle Widgets & Embed-Codes im Admin-Panel:
      {api_url}/admin
 """)
 

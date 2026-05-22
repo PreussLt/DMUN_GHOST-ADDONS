@@ -67,7 +67,7 @@
             ${q.answers.map((a) => renderAnswer(q, a, fb)).join("")}
           </div>
           ${fb && fb.explanation && !fb.is_correct
-            ? `<p class="${CSS_NS}__explanation">💡 ${esc(fb.explanation)}</p>`
+            ? `<p class="${CSS_NS}__explanation">${esc(fb.explanation)}</p>`
             : ""}
         </div>`;
     }

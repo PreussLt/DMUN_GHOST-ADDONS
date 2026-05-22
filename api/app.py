@@ -22,6 +22,7 @@ def create_app():
     app.config["PUBLIC_API_URL"] = os.environ.get("PUBLIC_API_URL", "http://localhost:5000")
     _upload_dir = os.path.join(os.path.dirname(app.config["DB_PATH"]), "uploads")
     app.config["UPLOAD_DIR"] = os.environ.get("UPLOAD_DIR", _upload_dir)
+    app.config["MEME_UPLOAD_TOKEN"] = os.environ.get("MEME_UPLOAD_TOKEN", "")
     os.makedirs(app.config["UPLOAD_DIR"], exist_ok=True)
 
     _init_db(app)
@@ -252,9 +253,24 @@ def create_app():
         base = app.config["PUBLIC_API_URL"].rstrip("/")
         return jsonify([{**dict(r), "url": f"{base}/uploads/{r['filename']}"} for r in rows])
 
+    @app.route("/api/memes/upload", methods=["POST"])
+    def api_public_upload_meme():
+        token = app.config["MEME_UPLOAD_TOKEN"]
+        if token:
+            provided = (
+                request.headers.get("X-Upload-Token")
+                or request.form.get("upload_token", "")
+            ).strip()
+            if provided != token:
+                return jsonify({"error": "Ungültiger Upload-Token"}), 403
+        return _handle_meme_upload()
+
     @app.route("/api/admin/meme", methods=["POST"])
     @require_auth
     def api_upload_meme():
+        return _handle_meme_upload()
+
+    def _handle_meme_upload():
         if "file" not in request.files:
             return jsonify({"error": "Keine Datei übermittelt"}), 400
         f = request.files["file"]
@@ -289,6 +305,167 @@ def create_app():
     @app.route("/uploads/<path:filename>")
     def serve_upload(filename):
         return send_from_directory(app.config["UPLOAD_DIR"], filename)
+
+    # -----------------------------------------------------------------------
+    # Poll API
+    # -----------------------------------------------------------------------
+
+    def _poll_with_results(db, poll_id, show_counts=True):
+        poll = db.execute("SELECT * FROM polls WHERE id = ?", (poll_id,)).fetchone()
+        if not poll:
+            return None
+        options = db.execute(
+            "SELECT po.id, po.option_text, po.position, COUNT(pv.id) AS votes"
+            " FROM poll_options po"
+            " LEFT JOIN poll_votes pv ON pv.option_id = po.id"
+            " WHERE po.poll_id = ? GROUP BY po.id ORDER BY po.position",
+            (poll_id,),
+        ).fetchall()
+        total = sum(o["votes"] for o in options)
+        result = dict(poll)
+        result["total_votes"] = total
+        result["options"] = []
+        for o in options:
+            od = dict(o)
+            od["percentage"] = round(o["votes"] / total * 100) if total else 0
+            if not show_counts:
+                od.pop("votes")
+                od["percentage"] = None
+            result["options"].append(od)
+        return result
+
+    @app.route("/api/poll/<int:poll_id>")
+    def api_get_poll(poll_id):
+        db = get_db()
+        session_id = request.args.get("session_id", "")
+        already_voted = False
+        voted_options = []
+        if session_id:
+            rows = db.execute(
+                "SELECT option_id FROM poll_votes WHERE poll_id = ? AND session_id = ?",
+                (poll_id, session_id),
+            ).fetchall()
+            already_voted = bool(rows)
+            voted_options = [r["option_id"] for r in rows]
+
+        poll = db.execute("SELECT * FROM polls WHERE id = ?", (poll_id,)).fetchone()
+        if not poll:
+            return jsonify({"error": "Umfrage nicht gefunden"}), 404
+
+        show = already_voted or bool(poll["show_results_before_vote"])
+        data = _poll_with_results(db, poll_id, show_counts=show)
+        data["already_voted"] = already_voted
+        data["voted_options"] = voted_options
+        return jsonify(data)
+
+    @app.route("/api/poll/<int:poll_id>/vote", methods=["POST"])
+    def api_vote_poll(poll_id):
+        data = request.get_json(silent=True) or {}
+        db = get_db()
+        poll = db.execute("SELECT * FROM polls WHERE id = ? AND active = 1", (poll_id,)).fetchone()
+        if not poll:
+            return jsonify({"error": "Umfrage geschlossen oder nicht gefunden"}), 404
+
+        session_id = data.get("session_id") or secrets.token_hex(16)
+        if db.execute(
+            "SELECT id FROM poll_votes WHERE poll_id = ? AND session_id = ?",
+            (poll_id, session_id),
+        ).fetchone():
+            return jsonify({"error": "Bereits abgestimmt"}), 409
+
+        option_ids = data.get("option_ids", [])
+        if not option_ids:
+            return jsonify({"error": "Keine Option gewählt"}), 400
+        if not poll["multiple"]:
+            option_ids = option_ids[:1]
+
+        for oid in option_ids:
+            if db.execute(
+                "SELECT id FROM poll_options WHERE id = ? AND poll_id = ?", (oid, poll_id)
+            ).fetchone():
+                db.execute(
+                    "INSERT INTO poll_votes (poll_id, option_id, session_id) VALUES (?,?,?)",
+                    (poll_id, oid, session_id),
+                )
+        db.commit()
+
+        result = _poll_with_results(db, poll_id, show_counts=True)
+        result["already_voted"] = True
+        result["voted_options"] = option_ids
+        result["session_id"] = session_id
+        return jsonify(result)
+
+    @app.route("/api/admin/polls")
+    @require_auth
+    def api_list_polls():
+        db = get_db()
+        rows = db.execute(
+            "SELECT p.*,"
+            " (SELECT COUNT(*) FROM poll_options WHERE poll_id = p.id) AS option_count,"
+            " (SELECT COUNT(*) FROM poll_votes   WHERE poll_id = p.id) AS total_votes"
+            " FROM polls p ORDER BY created_at DESC"
+        ).fetchall()
+        return jsonify([dict(r) for r in rows])
+
+    @app.route("/api/admin/poll/<int:poll_id>")
+    @require_auth
+    def api_get_poll_admin(poll_id):
+        db = get_db()
+        data = _poll_with_results(db, poll_id, show_counts=True)
+        if not data:
+            return jsonify({"error": "Nicht gefunden"}), 404
+        return jsonify(data)
+
+    @app.route("/api/admin/poll", methods=["POST"])
+    @require_auth
+    def api_create_poll():
+        data = request.get_json(silent=True) or {}
+        if not data.get("title"):
+            return jsonify({"error": "Titel fehlt"}), 400
+        db = get_db()
+        cur = db.execute(
+            "INSERT INTO polls (title, description, ghost_slug, multiple, show_results_before_vote)"
+            " VALUES (?,?,?,?,?)",
+            (data["title"], data.get("description", ""), data.get("ghost_slug", ""),
+             int(bool(data.get("multiple"))), int(bool(data.get("show_results_before_vote")))),
+        )
+        poll_id = cur.lastrowid
+        _save_options(db, poll_id, data.get("options", []))
+        db.commit()
+        return jsonify({"id": poll_id}), 201
+
+    @app.route("/api/admin/poll/<int:poll_id>", methods=["PUT"])
+    @require_auth
+    def api_update_poll(poll_id):
+        data = request.get_json(silent=True) or {}
+        db = get_db()
+        db.execute(
+            "UPDATE polls SET title=?, description=?, ghost_slug=?, multiple=?, show_results_before_vote=?"
+            " WHERE id=?",
+            (data.get("title", ""), data.get("description", ""), data.get("ghost_slug", ""),
+             int(bool(data.get("multiple"))), int(bool(data.get("show_results_before_vote"))), poll_id),
+        )
+        db.execute("DELETE FROM poll_options WHERE poll_id = ?", (poll_id,))
+        _save_options(db, poll_id, data.get("options", []))
+        db.commit()
+        return jsonify({"ok": True})
+
+    @app.route("/api/admin/poll/<int:poll_id>/toggle", methods=["POST"])
+    @require_auth
+    def api_toggle_poll(poll_id):
+        db = get_db()
+        db.execute("UPDATE polls SET active = 1 - active WHERE id = ?", (poll_id,))
+        db.commit()
+        row = db.execute("SELECT active FROM polls WHERE id = ?", (poll_id,)).fetchone()
+        return jsonify({"active": bool(row["active"])})
+
+    @app.route("/api/admin/poll/<int:poll_id>", methods=["DELETE"])
+    @require_auth
+    def api_delete_poll(poll_id):
+        db = get_db()
+        db.execute("DELETE FROM polls WHERE id = ?", (poll_id,))
+        db.commit()
+        return jsonify({"ok": True})
 
     # -----------------------------------------------------------------------
     # Admin UI
@@ -351,10 +528,46 @@ def _init_db(app):
                 title       TEXT DEFAULT '',
                 uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE TABLE IF NOT EXISTS polls (
+                id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+                title                    TEXT    NOT NULL,
+                description              TEXT    DEFAULT '',
+                ghost_slug               TEXT    DEFAULT '',
+                multiple                 INTEGER DEFAULT 0,
+                active                   INTEGER DEFAULT 1,
+                show_results_before_vote INTEGER DEFAULT 0,
+                created_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS poll_options (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                poll_id     INTEGER NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+                option_text TEXT    NOT NULL,
+                position    INTEGER DEFAULT 0
+            );
+
+            CREATE TABLE IF NOT EXISTS poll_votes (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                poll_id    INTEGER NOT NULL REFERENCES polls(id) ON DELETE CASCADE,
+                option_id  INTEGER NOT NULL REFERENCES poll_options(id) ON DELETE CASCADE,
+                session_id TEXT,
+                voted_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
             """
         )
         db.commit()
         db.close()
+
+
+def _save_options(db, poll_id, options):
+    for i, o in enumerate(options):
+        text = o.get("option_text", "").strip()
+        if text:
+            db.execute(
+                "INSERT INTO poll_options (poll_id, option_text, position) VALUES (?,?,?)",
+                (poll_id, text, i),
+            )
 
 
 def _save_questions(db, quiz_id, questions):
