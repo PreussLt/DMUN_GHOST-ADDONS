@@ -180,17 +180,15 @@
       }
 
       if (done > 0) {
-        setStatus("success", `${done} Bild${done !== 1 ? "er" : ""} erfolgreich hochgeladen!`);
+        const plural = done !== 1 ? "er wurden eingereicht" : " wurde eingereicht";
+        setStatus("pending", `${done} Bild${plural} und wird geprüft. Nach der Freigabe erscheint es in der Galerie.`);
         resetDropArea();
-        await loadGallery();
+        // Galerie NICHT neu laden – das Bild ist noch pending und wäre unsichtbar
       } else if (failed > 0 && !statusEl.textContent.includes("Token")) {
         setStatus("error", `${failed} Upload${failed !== 1 ? "s" : ""} fehlgeschlagen.`);
         uploadBtn.disabled = false;
       }
 
-      setTimeout(() => {
-        if (statusEl.dataset.type !== "error") setStatus("", "");
-      }, 4000);
     });
 
     function setStatus(type, msg) {
@@ -198,6 +196,10 @@
       statusEl.className   = `${NS}__status`;
       if (type) statusEl.classList.add(`${NS}__status--${type}`);
       statusEl.dataset.type = type;
+      // Pending-Meldung bleibt stehen (kein Auto-Clear)
+      if (type !== "pending" && type !== "error") {
+        setTimeout(() => { if (statusEl.dataset.type === type) setStatus("", ""); }, 4000);
+      }
     }
 
     // ── Galerie ──────────────────────────────────────────────────────────
@@ -324,6 +326,14 @@
 .dmun-mu__status--info    { color: #555; }
 .dmun-mu__status--success { color: #1e8449; }
 .dmun-mu__status--error   { color: #c0392b; }
+.dmun-mu__status--pending {
+  color: #7d4e00;
+  background: #fff8e1;
+  border: 1px solid #f0c070;
+  border-radius: 6px;
+  padding: .5rem .75rem;
+  font-size: .85rem;
+}
 
 /* Gallery */
 .dmun-mu__gallery-section { padding: 1.25rem 1.5rem; }

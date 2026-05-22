@@ -248,6 +248,18 @@ def create_app():
 
     @app.route("/api/memes")
     def api_list_memes():
+        """Öffentlich: nur freigegebene Memes."""
+        db = get_db()
+        rows = db.execute(
+            "SELECT * FROM memes WHERE status = 'approved' ORDER BY uploaded_at DESC"
+        ).fetchall()
+        base = app.config["PUBLIC_API_URL"].rstrip("/")
+        return jsonify([{**dict(r), "url": f"{base}/uploads/{r['filename']}"} for r in rows])
+
+    @app.route("/api/admin/memes")
+    @require_auth
+    def api_admin_list_memes():
+        """Admin: alle Memes mit Status."""
         db = get_db()
         rows = db.execute("SELECT * FROM memes ORDER BY uploaded_at DESC").fetchall()
         base = app.config["PUBLIC_API_URL"].rstrip("/")
@@ -255,6 +267,7 @@ def create_app():
 
     @app.route("/api/memes/upload", methods=["POST"])
     def api_public_upload_meme():
+        """Öffentlicher Upload: landet als 'pending', muss freigegeben werden."""
         token = app.config["MEME_UPLOAD_TOKEN"]
         if token:
             provided = (
@@ -263,14 +276,37 @@ def create_app():
             ).strip()
             if provided != token:
                 return jsonify({"error": "Ungültiger Upload-Token"}), 403
-        return _handle_meme_upload()
+        return _handle_meme_upload(status="pending")
 
     @app.route("/api/admin/meme", methods=["POST"])
     @require_auth
     def api_upload_meme():
-        return _handle_meme_upload()
+        """Admin-Upload: sofort freigegeben."""
+        return _handle_meme_upload(status="approved")
 
-    def _handle_meme_upload():
+    @app.route("/api/admin/meme/<int:meme_id>/approve", methods=["POST"])
+    @require_auth
+    def api_approve_meme(meme_id):
+        db = get_db()
+        db.execute("UPDATE memes SET status = 'approved' WHERE id = ?", (meme_id,))
+        db.commit()
+        return jsonify({"ok": True})
+
+    @app.route("/api/admin/meme/<int:meme_id>/reject", methods=["POST"])
+    @require_auth
+    def api_reject_meme(meme_id):
+        db = get_db()
+        row = db.execute("SELECT filename FROM memes WHERE id = ?", (meme_id,)).fetchone()
+        if not row:
+            return jsonify({"error": "Nicht gefunden"}), 404
+        filepath = os.path.join(app.config["UPLOAD_DIR"], row["filename"])
+        if os.path.exists(filepath):
+            os.remove(filepath)
+        db.execute("DELETE FROM memes WHERE id = ?", (meme_id,))
+        db.commit()
+        return jsonify({"ok": True})
+
+    def _handle_meme_upload(status="approved"):
         if "file" not in request.files:
             return jsonify({"error": "Keine Datei übermittelt"}), 400
         f = request.files["file"]
@@ -283,10 +319,18 @@ def create_app():
 
         title = (request.form.get("title") or "").strip()
         db = get_db()
-        cur = db.execute("INSERT INTO memes (filename, title) VALUES (?,?)", (filename, title))
+        cur = db.execute(
+            "INSERT INTO memes (filename, title, status) VALUES (?,?,?)",
+            (filename, title, status),
+        )
         db.commit()
         base = app.config["PUBLIC_API_URL"].rstrip("/")
-        return jsonify({"id": cur.lastrowid, "filename": filename, "url": f"{base}/uploads/{filename}"}), 201
+        return jsonify({
+            "id": cur.lastrowid,
+            "filename": filename,
+            "url": f"{base}/uploads/{filename}",
+            "status": status,
+        }), 201
 
     @app.route("/api/admin/meme/<int:meme_id>", methods=["DELETE"])
     @require_auth
@@ -525,6 +569,7 @@ def _init_db(app):
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 filename    TEXT NOT NULL,
                 title       TEXT DEFAULT '',
+                status      TEXT DEFAULT 'approved',
                 uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -557,11 +602,14 @@ def _init_db(app):
             """
         )
         db.commit()
-        # Migration: add thank_you_text if it doesn't exist yet (existing DBs)
-        existing = [r[1] for r in db.execute("PRAGMA table_info(polls)").fetchall()]
-        if "thank_you_text" not in existing:
+        # Migrations für bestehende Datenbanken
+        poll_cols = [r[1] for r in db.execute("PRAGMA table_info(polls)").fetchall()]
+        if "thank_you_text" not in poll_cols:
             db.execute("ALTER TABLE polls ADD COLUMN thank_you_text TEXT DEFAULT ''")
-            db.commit()
+        meme_cols = [r[1] for r in db.execute("PRAGMA table_info(memes)").fetchall()]
+        if "status" not in meme_cols:
+            db.execute("ALTER TABLE memes ADD COLUMN status TEXT DEFAULT 'approved'")
+        db.commit()
         db.close()
 
 

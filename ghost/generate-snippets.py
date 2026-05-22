@@ -54,17 +54,24 @@ def main():
     write(
         ROOT / "ghost" / "ghost-site-header.html",
         f"""<!-- ============================================================
-     DMUN Quiz – Ghost Code Injection > Site Header
+     DMUN Widgets – Ghost Code Injection > Site Header
      Ghost Admin → Settings → Code Injection → Site Header
      ============================================================ -->
+
+<!-- Quiz-Widget CSS -->
 <link rel="stylesheet" href="{api_url}/static/quiz-widget.css">
 
-<!-- Optional: Farben anpassen -->
+<!-- Poll-Widget CSS -->
+<link rel="stylesheet" href="{api_url}/static/poll-widget.css">
+
+<!-- Optional: Farben aller Widgets an dein Ghost-Theme anpassen -->
 <!--
 <style>
   :root {{
     --dmun-primary: #003366;
     --dmun-accent:  #005b99;
+    --dp-primary:   #003366;
+    --dp-accent:    #005b99;
   }}
 </style>
 -->

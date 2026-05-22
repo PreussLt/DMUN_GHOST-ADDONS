@@ -120,6 +120,20 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 .poll-card__votes{font-size:.85rem;font-weight:700;color:var(--pri);padding:.2rem .6rem;background:var(--bg);border-radius:99px;border:1px solid var(--border)}
 .poll-card__results{padding:.85rem 1.1rem}
 .poll-card__no-votes{font-size:.85rem;color:var(--muted);font-style:italic}
+/* ── Meme Moderation ──────────────────────────────────────────────────────── */
+.pending-section{background:#fff8f0;border:1px solid #f0c070;border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1.5rem}
+.pending-section__header{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem}
+.pending-section__title{font-weight:700;font-size:.95rem;color:#7d4e00;flex:1}
+.pending-badge{display:inline-flex;align-items:center;justify-content:center;min-width:1.5em;height:1.5em;padding:0 .4em;background:#e67e22;color:#fff;border-radius:99px;font-size:.75rem;font-weight:700}
+.pending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem}
+.pending-card{background:#fff;border:2px solid #f0c070;border-radius:var(--radius);overflow:hidden}
+.pending-card__img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:zoom-in}
+.pending-card__title{font-size:.75rem;color:var(--muted);padding:.3rem .5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pending-card__actions{display:flex;gap:.3rem;padding:.4rem .5rem;border-top:1px solid var(--border)}
+.pending-card__actions .btn{flex:1;justify-content:center;font-size:.75rem;padding:.3rem .4rem}
+.meme-status-dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;margin-right:.25em}
+.meme-status-dot--approved{background:var(--ok)}
+.meme-status-dot--pending{background:#e67e22}
 /* ── Meme Gallery ─────────────────────────────────────────────────────────── */
 .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--bg)}
 .upload-area:hover,.upload-area.drag-over{border-color:var(--acc);background:#eef3f8}
@@ -325,6 +339,15 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
     <div class="toolbar">
       <h2>Meme-Galerie</h2>
       <span id="meme-count" style="color:var(--muted);font-size:.875rem"></span>
+    </div>
+
+    <!-- Ausstehende Memes -->
+    <div id="pending-section" class="pending-section" style="display:none">
+      <div class="pending-section__header">
+        <span class="pending-section__title">⏳ Warten auf Freigabe</span>
+        <span id="pending-badge" class="pending-badge">0</span>
+      </div>
+      <div id="pending-grid" class="pending-grid"></div>
     </div>
 
     <div class="card" style="margin-bottom:1.5rem">
@@ -840,23 +863,62 @@ document.querySelector('.tab-btn[data-tab="polls"]').addEventListener("click", l
 let memes = [];
 
 async function loadMemes() {
-  const res = await fetch(API+"/api/memes");
+  const res = await fetch(API+"/api/admin/memes", {headers:headers()});
   memes = await res.json();
+  renderPendingGrid();
   renderMemeGrid();
 }
 
+function renderPendingGrid() {
+  const pending = memes.filter(m => m.status === "pending");
+  const section = document.getElementById("pending-section");
+  const grid    = document.getElementById("pending-grid");
+  const badge   = document.getElementById("pending-badge");
+
+  badge.textContent = pending.length;
+  section.style.display = pending.length ? "" : "none";
+
+  if (!pending.length) { grid.innerHTML = ""; return; }
+
+  grid.innerHTML = pending.map(m => `
+    <div class="pending-card" id="pending-card-${m.id}">
+      <img class="pending-card__img" src="${esc(m.url)}" alt="${esc(m.title)}" loading="lazy"
+           onclick="openLightbox('${esc(m.url)}')">
+      <div class="pending-card__title" title="${esc(m.title)}">${esc(m.title||"–")}</div>
+      <div class="pending-card__actions">
+        <button class="btn btn-success btn-sm" onclick="approveMeme(${m.id})">✓ Freigeben</button>
+        <button class="btn btn-danger btn-sm"  onclick="rejectMeme(${m.id})">✗ Ablehnen</button>
+      </div>
+    </div>`).join("");
+}
+
 function renderMemeGrid() {
+  const approved = memes.filter(m => m.status === "approved");
   const grid = document.getElementById("meme-grid");
-  document.getElementById("meme-count").textContent = memes.length ? `${memes.length} Memes` : "";
-  if (!memes.length) { grid.innerHTML='<p class="empty" style="grid-column:1/-1">Noch keine Memes hochgeladen</p>'; return; }
-  grid.innerHTML = memes.map(m => `
+  document.getElementById("meme-count").textContent = approved.length ? `${approved.length} freigegeben` : "";
+  if (!approved.length) { grid.innerHTML='<p class="empty" style="grid-column:1/-1">Noch keine freigegebenen Memes</p>'; return; }
+  grid.innerHTML = approved.map(m => `
     <div class="meme-card">
-      <img class="meme-card__img" src="${esc(m.url)}" alt="${esc(m.title)}" loading="lazy" onclick="openLightbox('${esc(m.url)}')">
+      <img class="meme-card__img" src="${esc(m.url)}" alt="${esc(m.title)}" loading="lazy"
+           onclick="openLightbox('${esc(m.url)}')">
       <div class="meme-card__body">
         <span class="meme-card__title" title="${esc(m.title)}">${esc(m.title||"–")}</span>
         <button class="btn btn-danger btn-sm" onclick="deleteMeme(${m.id})">✕</button>
       </div>
     </div>`).join("");
+}
+
+async function approveMeme(id) {
+  await fetch(API+"/api/admin/meme/"+id+"/approve", {method:"POST", headers:headers()});
+  toast("Meme freigegeben ✓");
+  await loadMemes();
+}
+
+async function rejectMeme(id) {
+  if (!confirm("Meme ablehnen und löschen?")) return;
+  await fetch(API+"/api/admin/meme/"+id+"/reject", {method:"POST", headers:headers()});
+  toast("Meme abgelehnt");
+  await loadMemes();
 }
 
 async function deleteMeme(id) {
