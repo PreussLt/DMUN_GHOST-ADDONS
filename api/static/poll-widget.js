@@ -90,9 +90,11 @@
     }
 
     function renderResults() {
-      const total     = poll.total_votes || 0;
       const justVoted = !!poll._justVoted;
-      const maxVotes  = poll.options.length ? Math.max.apply(null, poll.options.map(function (o) { return o.votes || 0; })) : 0;
+      // Fuehrendes Ergebnis anhand hoechstem Prozentsatz bestimmen
+      const maxPct = poll.options.length
+        ? Math.max.apply(null, poll.options.map(function (o) { return o.percentage || 0; }))
+        : 0;
 
       let html = "";
 
@@ -100,19 +102,18 @@
       if (justVoted) {
         const msg = (poll.thank_you_text && poll.thank_you_text.trim())
           ? esc(poll.thank_you_text)
-          : "Deine Stimme wurde gezählt!";
+          : "Deine Stimme wurde gezaehlt!";
         html += "<div class=\"" + NS + "__voted-banner\">" +
           "<span class=\"" + NS + "__voted-check\">✓</span>" + msg +
           "</div>";
       }
 
-      // Balken
+      // Balken - nur Prozent, keine absoluten Zahlen
       html += "<div class=\"" + NS + "__results\">";
       poll.options.forEach(function (o) {
         const pct   = o.percentage != null ? o.percentage : 0;
-        const votes = o.votes != null ? o.votes : 0;
         const voted = poll.voted_options && poll.voted_options.indexOf(o.id) !== -1;
-        const isTop = total > 0 && maxVotes > 0 && votes === maxVotes;
+        const isTop = pct > 0 && pct === maxPct;
 
         let rowCls = NS + "__bar-row";
         if (voted) rowCls += " " + NS + "__bar-row--voted";
@@ -123,9 +124,9 @@
             "<span class=\"" + NS + "__bar-text\">" +
               (voted ? "<span class=\"" + NS + "__voted-tick\">✓</span>" : "") +
               esc(o.option_text) +
-              (isTop && total > 0 ? "<span class=\"" + NS + "__leader-badge\">Führend</span>" : "") +
+              (isTop ? "<span class=\"" + NS + "__leader-badge\">Führend</span>" : "") +
             "</span>" +
-            "<span class=\"" + NS + "__bar-pct\">" + votes + " (" + pct + " %)</span>" +
+            "<span class=\"" + NS + "__bar-pct\">" + pct + " %</span>" +
           "</div>" +
           "<div class=\"" + NS + "__bar-track\">" +
             "<div class=\"" + NS + "__bar-fill\" style=\"width:0%\" data-pct=\"" + pct + "\"></div>" +
@@ -134,14 +135,14 @@
       });
       html += "</div>";
 
-      // Fußzeile
+      // Fuszeile - kein absoluter Gesamtzaehler, nur Status
       html += "<div class=\"" + NS + "__footer\">" +
-        "<span class=\"" + NS + "__total\">" + total + " Stimme" + (total !== 1 ? "n" : "") + " insgesamt</span>" +
         (!poll.active ? "<span class=\"" + NS + "__closed-note\">Umfrage geschlossen</span>" : "") +
       "</div>";
 
       return html;
     }
+
 
     // ── Abstimmen ───────────────────────────────────────────────────────────
 

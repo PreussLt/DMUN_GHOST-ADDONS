@@ -354,7 +354,13 @@ def create_app():
     # Poll API
     # -----------------------------------------------------------------------
 
-    def _poll_with_results(db, poll_id, show_counts=True):
+    def _poll_with_results(db, poll_id, result_mode="full"):
+        """
+        result_mode:
+          "full"  – Stimmen + Prozent (Admin)
+          "pct"   – nur Prozent, keine absoluten Zahlen (öffentlich nach Abstimmung)
+          "none"  – keine Ergebnisse (öffentlich vor Abstimmung)
+        """
         poll = db.execute("SELECT * FROM polls WHERE id = ?", (poll_id,)).fetchone()
         if not poll:
             return None
@@ -367,12 +373,16 @@ def create_app():
         ).fetchall()
         total = sum(o["votes"] for o in options)
         result = dict(poll)
-        result["total_votes"] = total
+        result["total_votes"] = total if result_mode == "full" else None
         result["options"] = []
         for o in options:
             od = dict(o)
-            od["percentage"] = round(o["votes"] / total * 100) if total else 0
-            if not show_counts:
+            if result_mode == "full":
+                od["percentage"] = round(o["votes"] / total * 100) if total else 0
+            elif result_mode == "pct":
+                od["percentage"] = round(o["votes"] / total * 100) if total else 0
+                od.pop("votes")
+            else:  # "none"
                 od.pop("votes")
                 od["percentage"] = None
             result["options"].append(od)
@@ -397,7 +407,8 @@ def create_app():
             return jsonify({"error": "Umfrage nicht gefunden"}), 404
 
         show = already_voted or bool(poll["show_results_before_vote"])
-        data = _poll_with_results(db, poll_id, show_counts=show)
+        mode = "pct" if show else "none"
+        data = _poll_with_results(db, poll_id, result_mode=mode)
         data["already_voted"] = already_voted
         data["voted_options"] = voted_options
         return jsonify(data)
@@ -433,7 +444,7 @@ def create_app():
                 )
         db.commit()
 
-        result = _poll_with_results(db, poll_id, show_counts=True)
+        result = _poll_with_results(db, poll_id, result_mode="pct")
         result["already_voted"] = True
         result["voted_options"] = option_ids
         result["session_id"] = session_id
@@ -446,13 +457,13 @@ def create_app():
         poll_ids = [r["id"] for r in db.execute(
             "SELECT id FROM polls ORDER BY created_at DESC"
         ).fetchall()]
-        return jsonify([_poll_with_results(db, pid, show_counts=True) for pid in poll_ids])
+        return jsonify([_poll_with_results(db, pid, result_mode="full") for pid in poll_ids])
 
     @app.route("/api/admin/poll/<int:poll_id>")
     @require_auth
     def api_get_poll_admin(poll_id):
         db = get_db()
-        data = _poll_with_results(db, poll_id, show_counts=True)
+        data = _poll_with_results(db, poll_id, result_mode="full")
         if not data:
             return jsonify({"error": "Nicht gefunden"}), 404
         return jsonify(data)
