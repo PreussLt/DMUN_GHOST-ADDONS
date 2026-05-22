@@ -294,6 +294,12 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
               Ergebnisse vor Abstimmung anzeigen
             </label>
           </div>
+          <div class="form-group" style="margin-top:1rem">
+            <label class="label" for="poll-thankyou">Nachricht nach der Abstimmung</label>
+            <textarea id="poll-thankyou" rows="2"
+              placeholder="z.B. Danke für deine Teilnahme! Die Ergebnisse werden beim nächsten Committee vorgestellt."></textarea>
+            <p class="hint">Wird direkt nach dem Abstimmen angezeigt. Leer lassen für Standardtext.</p>
+          </div>
         </div>
         <div class="editor-section">
           <h3>Antwortmöglichkeiten</h3>
@@ -722,6 +728,7 @@ document.getElementById("btn-new-poll").addEventListener("click", () => {
   document.getElementById("poll-slug").value = "";
   document.getElementById("poll-multiple").checked = false;
   document.getElementById("poll-show-before").checked = false;
+  document.getElementById("poll-thankyou").value = "";
   document.getElementById("poll-options-container").innerHTML = "";
   addPollOption(); addPollOption(); addPollOption();
   showPollView("editor");
@@ -740,6 +747,7 @@ async function openPollEditor(id) {
   document.getElementById("poll-slug").value = poll.ghost_slug || "";
   document.getElementById("poll-multiple").checked = !!poll.multiple;
   document.getElementById("poll-show-before").checked = !!poll.show_results_before_vote;
+  document.getElementById("poll-thankyou").value = poll.thank_you_text || "";
   document.getElementById("poll-options-container").innerHTML = "";
   poll.options.forEach(o => addPollOption(o.option_text));
   showPollView("editor");
@@ -779,6 +787,7 @@ document.getElementById("btn-save-poll").addEventListener("click", async () => {
     ghost_slug: document.getElementById("poll-slug").value.trim(),
     multiple: document.getElementById("poll-multiple").checked,
     show_results_before_vote: document.getElementById("poll-show-before").checked,
+    thank_you_text: document.getElementById("poll-thankyou").value.trim(),
     options
   };
   const url = editingPollId ? API+"/api/admin/poll/"+editingPollId : API+"/api/admin/poll";

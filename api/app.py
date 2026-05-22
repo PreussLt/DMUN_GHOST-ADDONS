@@ -421,10 +421,11 @@ def create_app():
             return jsonify({"error": "Titel fehlt"}), 400
         db = get_db()
         cur = db.execute(
-            "INSERT INTO polls (title, description, ghost_slug, multiple, show_results_before_vote)"
-            " VALUES (?,?,?,?,?)",
+            "INSERT INTO polls (title, description, ghost_slug, multiple, show_results_before_vote, thank_you_text)"
+            " VALUES (?,?,?,?,?,?)",
             (data["title"], data.get("description", ""), data.get("ghost_slug", ""),
-             int(bool(data.get("multiple"))), int(bool(data.get("show_results_before_vote")))),
+             int(bool(data.get("multiple"))), int(bool(data.get("show_results_before_vote"))),
+             data.get("thank_you_text", "")),
         )
         poll_id = cur.lastrowid
         _save_options(db, poll_id, data.get("options", []))
@@ -437,10 +438,11 @@ def create_app():
         data = request.get_json(silent=True) or {}
         db = get_db()
         db.execute(
-            "UPDATE polls SET title=?, description=?, ghost_slug=?, multiple=?, show_results_before_vote=?"
+            "UPDATE polls SET title=?, description=?, ghost_slug=?, multiple=?, show_results_before_vote=?, thank_you_text=?"
             " WHERE id=?",
             (data.get("title", ""), data.get("description", ""), data.get("ghost_slug", ""),
-             int(bool(data.get("multiple"))), int(bool(data.get("show_results_before_vote"))), poll_id),
+             int(bool(data.get("multiple"))), int(bool(data.get("show_results_before_vote"))),
+             data.get("thank_you_text", ""), poll_id),
         )
         db.execute("DELETE FROM poll_options WHERE poll_id = ?", (poll_id,))
         _save_options(db, poll_id, data.get("options", []))
@@ -534,6 +536,7 @@ def _init_db(app):
                 multiple                 INTEGER DEFAULT 0,
                 active                   INTEGER DEFAULT 1,
                 show_results_before_vote INTEGER DEFAULT 0,
+                thank_you_text           TEXT    DEFAULT '',
                 created_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -554,6 +557,11 @@ def _init_db(app):
             """
         )
         db.commit()
+        # Migration: add thank_you_text if it doesn't exist yet (existing DBs)
+        existing = [r[1] for r in db.execute("PRAGMA table_info(polls)").fetchall()]
+        if "thank_you_text" not in existing:
+            db.execute("ALTER TABLE polls ADD COLUMN thank_you_text TEXT DEFAULT ''")
+            db.commit()
         db.close()
 
 
