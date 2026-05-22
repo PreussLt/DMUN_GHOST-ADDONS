@@ -1,0 +1,163 @@
+{
+  "title": "UN-Verfahren & Grundlagen – Quiz",
+  "description": "Teste dein Wissen über die Vereinten Nationen, den Sicherheitsrat, MUN-Verfahrensregeln und wichtige UN-Organe.",
+  "ghost_slug": "",
+  "questions": [
+    {
+      "question_text": "Wie viele Mitgliedstaaten haben die Vereinten Nationen (Stand 2024)?",
+      "answers": [
+        { "answer_text": "154", "is_correct": false, "explanation": "" },
+        { "answer_text": "173", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "193",
+          "is_correct": true,
+          "explanation": "Die UN wurden 1945 mit 51 Gründungsmitgliedern gegründet und zählen heute 193 Mitgliedstaaten. Der bisher letzte Beitritt war der Südsudan im Jahr 2011."
+        },
+        { "answer_text": "201", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Wie viele ständige Mitglieder (P5) hat der UN-Sicherheitsrat?",
+      "answers": [
+        { "answer_text": "3", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "5",
+          "is_correct": true,
+          "explanation": "Die fünf ständigen Mitglieder (P5) sind: USA, Russland, China, Frankreich und das Vereinigte Königreich. Alle fünf besitzen ein Vetorecht gegenüber Sachentscheidungen."
+        },
+        { "answer_text": "7", "is_correct": false, "explanation": "" },
+        { "answer_text": "10", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Welches Land ist KEIN ständiges Mitglied des UN-Sicherheitsrats?",
+      "answers": [
+        { "answer_text": "Frankreich", "is_correct": false, "explanation": "" },
+        { "answer_text": "China", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "Deutschland",
+          "is_correct": true,
+          "explanation": "Deutschland ist kein ständiges Mitglied des Sicherheitsrats. Die P5 sind USA, Russland, China, Frankreich und das Vereinigte Königreich – Deutschland kann lediglich als nichtständiges Mitglied für 2-Jahres-Perioden gewählt werden."
+        },
+        { "answer_text": "Russland", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Wann wurden die Vereinten Nationen offiziell gegründet?",
+      "answers": [
+        { "answer_text": "1919", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "1945",
+          "is_correct": true,
+          "explanation": "Die UN-Charta trat am 24. Oktober 1945 in Kraft – dieser Tag wird seitdem als UN-Tag gefeiert. 1919 wurde der Völkerbund gegründet, der Vorgänger der UN."
+        },
+        { "answer_text": "1948", "is_correct": false, "explanation": "" },
+        { "answer_text": "1956", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Was bewirkt ein Veto eines ständigen Sicherheitsratsmitglieds?",
+      "answers": [
+        { "answer_text": "Es erzwingt eine erneute Abstimmung nach 30 Tagen.", "is_correct": false, "explanation": "" },
+        { "answer_text": "Es zählt als Enthaltung und hat keine weitere Wirkung.", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "Es blockiert den Beschluss vollständig, unabhängig von allen anderen Stimmen.",
+          "is_correct": true,
+          "explanation": "Ein einziges Veto eines P5-Mitglieds verhindert jeden Sachbeschluss des Sicherheitsrats – auch wenn alle anderen 14 Mitglieder dafürstimmen. Eine Enthaltung gilt dabei nicht als Veto."
+        },
+        { "answer_text": "Es überträgt die Entscheidung an die Generalversammlung.", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Wofür steht die Abkürzung „ECOSOC"?",
+      "answers": [
+        {
+          "answer_text": "Economic and Social Council",
+          "is_correct": true,
+          "explanation": "ECOSOC (Wirtschafts- und Sozialrat) ist eines der sechs Hauptorgane der UN. Er koordiniert die wirtschaftliche, soziale und humanitäre Arbeit der UN und ihrer Sonderorganisationen wie WHO oder UNESCO."
+        },
+        { "answer_text": "European Council on Security and Cooperation", "is_correct": false, "explanation": "" },
+        { "answer_text": "Emergency Committee on Social and Cultural Issues", "is_correct": false, "explanation": "" },
+        { "answer_text": "Executive Council of the Secretary-General", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Wie viele offizielle Amtssprachen hat die UN?",
+      "answers": [
+        { "answer_text": "4", "is_correct": false, "explanation": "" },
+        { "answer_text": "5", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "6",
+          "is_correct": true,
+          "explanation": "Die sechs offiziellen UN-Sprachen sind: Arabisch, Chinesisch (Mandarin), Englisch, Französisch, Russisch und Spanisch. Alle offiziellen Dokumente werden in diese Sprachen übersetzt."
+        },
+        { "answer_text": "8", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Was versteht man bei einer MUN-Konferenz unter einem „Point of Order"?",
+      "answers": [
+        { "answer_text": "Ein Antrag auf Vertagung der Debatte", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "Ein Hinweis auf einen Verstoß gegen die Verfahrensregeln",
+          "is_correct": true,
+          "explanation": "Ein Point of Order unterbricht sofort die laufende Debatte. Er dient ausschließlich dem Hinweis auf Verfahrensfehler (z.B. falsche Redezeit), nicht für inhaltliche Argumente. Der Chair muss unmittelbar darüber entscheiden."
+        },
+        { "answer_text": "Eine Anfrage an den Chair, das Wort ergreifen zu dürfen", "is_correct": false, "explanation": "" },
+        { "answer_text": "Ein Antrag auf geheime Abstimmung", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Was ist ein „Working Paper" bei einer MUN-Konferenz?",
+      "answers": [
+        { "answer_text": "Ein offiziell verabschiedeter Resolutionsentwurf", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "Ein informelles Dokument zur Sammlung und Diskussion von Ideen",
+          "is_correct": true,
+          "explanation": "Ein Working Paper ist ein formloses Arbeitsdokument, das Positionen und Lösungsansätze bündelt. Erst wenn es vom Chair akzeptiert und formal eingebracht wird, wird es zur Draft Resolution (Resolutionsentwurf)."
+        },
+        { "answer_text": "Die offizielle Geschäftsordnung des Komitees", "is_correct": false, "explanation": "" },
+        { "answer_text": "Ein offizielles Schreiben an den UN-Generalsekretär", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Was bedeutet „Konsens" in UN-Abstimmungen?",
+      "answers": [
+        { "answer_text": "Eine Zweidrittelmehrheit der anwesenden Mitgliedstaaten", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "Eine Entscheidung ohne formale Abstimmung, gegen die kein Mitglied aktiv Einspruch erhebt",
+          "is_correct": true,
+          "explanation": "Konsens heißt nicht Einstimmigkeit: Enthaltungen sind möglich. Wenn kein Mitglied aktiven Widerspruch erhebt, gilt die Entscheidung als im Konsens getroffen – ohne Auszählung der Stimmen."
+        },
+        { "answer_text": "Eine einfache Mehrheitsentscheidung", "is_correct": false, "explanation": "" },
+        { "answer_text": "Die gemeinsame Zustimmung der P5", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Welches Dokument bildet die rechtliche Grundlage der Vereinten Nationen?",
+      "answers": [
+        { "answer_text": "Die Allgemeine Erklärung der Menschenrechte (1948)", "is_correct": false, "explanation": "" },
+        { "answer_text": "Der Versailler Vertrag (1919)", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "Die Charta der Vereinten Nationen (1945)",
+          "is_correct": true,
+          "explanation": "Die UN-Charta wurde am 26. Juni 1945 in San Francisco unterzeichnet und trat am 24. Oktober 1945 in Kraft. Sie legt Ziele, Grundsätze, Organe und Befugnisse der UN verbindlich fest."
+        },
+        { "answer_text": "Das Statut des Internationalen Gerichtshofs", "is_correct": false, "explanation": "" }
+      ]
+    },
+    {
+      "question_text": "Welches der folgenden ist ein Hauptorgan der Vereinten Nationen?",
+      "answers": [
+        { "answer_text": "UNESCO", "is_correct": false, "explanation": "" },
+        { "answer_text": "WHO", "is_correct": false, "explanation": "" },
+        { "answer_text": "UNICEF", "is_correct": false, "explanation": "" },
+        {
+          "answer_text": "Internationaler Gerichtshof (IGH)",
+          "is_correct": true,
+          "explanation": "Die UN haben sechs Hauptorgane: Generalversammlung, Sicherheitsrat, ECOSOC, Treuhandrat, Sekretariat und Internationaler Gerichtshof (IGH). UNESCO, WHO und UNICEF sind Sonderorganisationen bzw. Fonds der UN, aber keine Hauptorgane."
+        }
+      ]
+    }
+  ]
+}
