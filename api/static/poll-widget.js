@@ -78,25 +78,45 @@
     }
 
     function renderResults() {
-      const total = poll.total_votes || 0;
+      const total   = poll.total_votes || 0;
+      const justVoted = poll._justVoted;
+
+      // Sort a copy by votes descending to find the leader(s)
+      const maxVotes = poll.options.length ? Math.max(...poll.options.map(o => o.votes ?? 0)) : 0;
+
       return `
         <div class="${NS}__results">
+          ${justVoted ? `
+            <div class="${NS}__voted-banner">
+              <span class="${NS}__voted-check">✓</span>
+              Deine Stimme wurde gezählt!
+            </div>` : ""}
+
           ${poll.options.map(o => {
-            const pct = o.percentage ?? 0;
-            const voted = poll.voted_options && poll.voted_options.includes(o.id);
+            const pct    = o.percentage ?? 0;
+            const votes  = o.votes ?? 0;
+            const voted  = poll.voted_options && poll.voted_options.includes(o.id);
+            const isTop  = total > 0 && votes === maxVotes && maxVotes > 0;
             return `
-              <div class="${NS}__bar-row${voted ? " "+NS+"__bar-row--voted" : ""}">
+              <div class="${NS}__bar-row${voted ? " "+NS+"__bar-row--voted" : ""}${isTop ? " "+NS+"__bar-row--top" : ""}">
                 <div class="${NS}__bar-label">
-                  <span class="${NS}__bar-text">${voted ? "✓ " : ""}${esc(o.option_text)}</span>
-                  <span class="${NS}__bar-pct">${o.votes != null ? o.votes+" ("+pct+"%)": "–"}</span>
+                  <span class="${NS}__bar-text">
+                    ${voted ? `<span class="${NS}__voted-tick">✓</span>` : ""}
+                    ${esc(o.option_text)}
+                    ${isTop && total > 0 ? `<span class="${NS}__leader-badge">Führend</span>` : ""}
+                  </span>
+                  <span class="${NS}__bar-pct">${votes} (${pct}&nbsp;%)</span>
                 </div>
                 <div class="${NS}__bar-track">
                   <div class="${NS}__bar-fill" style="width:0%" data-pct="${pct}"></div>
                 </div>
               </div>`;
           }).join("")}
-          <p class="${NS}__total">${total} Stimme${total !== 1 ? "n" : ""}</p>
-          ${poll.already_voted ? `<p class="${NS}__voted-note">Du hast bereits abgestimmt.</p>` : ""}
+
+          <div class="${NS}__footer">
+            <span class="${NS}__total">${total} Stimme${total !== 1 ? "n" : ""} insgesamt</span>
+            ${!poll.active ? `<span class="${NS}__closed-note">Umfrage geschlossen</span>` : ""}
+          </div>
         </div>`;
     }
 
@@ -119,13 +139,13 @@
         if (res.status === 409) {
           poll.already_voted = true;
           render();
+          scheduleBarAnimation();
           return;
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        poll = { ...poll, ...(await res.json()) };
+        poll = { ...poll, ...(await res.json()), _justVoted: true };
         render();
-        // Animate bars after render
-        setTimeout(animateBars, 30);
+        scheduleBarAnimation();
       } catch (e) {
         alert("Fehler beim Abstimmen. Bitte versuche es erneut.");
       }
@@ -137,8 +157,20 @@
       });
     }
 
-    // If already showing results, animate on load
-    load().then(() => setTimeout(animateBars, 80));
+    function scheduleBarAnimation() {
+      // Double rAF ensures the browser has painted the 0%-state before animating
+      requestAnimationFrame(() => requestAnimationFrame(animateBars));
+    }
+
+    // If already showing results on load, animate bars
+    async function loadAndAnimate() {
+      await load();
+      if (poll && (poll.already_voted || poll.show_results_before_vote || !poll.active)) {
+        scheduleBarAnimation();
+      }
+    }
+
+    loadAndAnimate();
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -195,17 +227,35 @@
 @keyframes dp-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
 .dmun-poll__hint { margin:.5rem 0 0; font-size:.8rem; color:#888; }
 /* Results */
-.dmun-poll__results { display:flex; flex-direction:column; gap:.85rem; }
+.dmun-poll__voted-banner {
+  display:flex; align-items:center; gap:.6rem;
+  background:#eafaf1; border:1px solid #a9dfbf; border-radius:7px;
+  padding:.6rem .9rem; color:#1e8449; font-weight:700; font-size:.95rem;
+  margin-bottom:.5rem;
+}
+.dmun-poll__voted-check {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:1.5em; height:1.5em; background:var(--dp-voted); color:#fff;
+  border-radius:50%; font-size:.85em; flex-shrink:0;
+}
+.dmun-poll__results { display:flex; flex-direction:column; gap:.75rem; }
 .dmun-poll__bar-row { }
 .dmun-poll__bar-row--voted .dmun-poll__bar-text { color:var(--dp-voted); font-weight:700; }
 .dmun-poll__bar-row--voted .dmun-poll__bar-fill { background:var(--dp-voted); }
-.dmun-poll__bar-label { display:flex; justify-content:space-between; gap:.5rem; margin-bottom:.25rem; font-size:.9rem; }
-.dmun-poll__bar-text  { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.dmun-poll__bar-pct   { flex-shrink:0; font-weight:700; color:#444; }
-.dmun-poll__bar-track { height:20px; background:var(--dp-bg); border-radius:4px; overflow:hidden; border:1px solid var(--dp-border); }
-.dmun-poll__bar-fill  { height:100%; width:0; background:var(--dp-accent); border-radius:4px; transition:width .6s cubic-bezier(.4,0,.2,1); }
-.dmun-poll__total     { margin:.5rem 0 0; font-size:.82rem; color:#888; }
-.dmun-poll__voted-note { margin:.25rem 0 0; font-size:.82rem; color:var(--dp-voted); }
+.dmun-poll__bar-row--top   .dmun-poll__bar-fill { background:var(--dp-primary); }
+.dmun-poll__bar-label { display:flex; justify-content:space-between; align-items:baseline; gap:.5rem; margin-bottom:.3rem; font-size:.9rem; }
+.dmun-poll__bar-text  { flex:1; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:.35rem; }
+.dmun-poll__voted-tick { color:var(--dp-voted); font-weight:700; flex-shrink:0; }
+.dmun-poll__leader-badge {
+  font-size:.68rem; font-weight:700; padding:.1em .45em;
+  background:var(--dp-primary); color:#fff; border-radius:4px; flex-shrink:0;
+}
+.dmun-poll__bar-pct   { flex-shrink:0; font-weight:700; color:#444; font-size:.85rem; white-space:nowrap; }
+.dmun-poll__bar-track { height:22px; background:var(--dp-bg); border-radius:5px; overflow:hidden; border:1px solid var(--dp-border); }
+.dmun-poll__bar-fill  { height:100%; width:0; background:var(--dp-accent); border-radius:5px; transition:width .65s cubic-bezier(.4,0,.2,1); }
+.dmun-poll__footer     { display:flex; align-items:center; gap:1rem; margin-top:.25rem; flex-wrap:wrap; }
+.dmun-poll__total      { font-size:.82rem; color:#888; }
+.dmun-poll__closed-note { font-size:.78rem; color:#c0392b; font-weight:600; }
 /* States */
 .dmun-poll__loading,.dmun-poll__error { padding:2rem; text-align:center; color:#888; border:1px dashed var(--dp-border); border-radius:var(--dp-radius); }
 .dmun-poll__error { color:#c0392b; }

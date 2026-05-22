@@ -110,6 +110,16 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 .poll-option-input input[type=text]{flex:1;border:none;outline:none;font-size:.95rem}
 .poll-total{font-size:.85rem;color:var(--muted);margin-bottom:1.25rem}
 .poll-embed-box{background:#1e1e2e;color:#a6e3a1;padding:1rem;border-radius:var(--radius);font-family:monospace;font-size:.8rem;overflow-x:auto;white-space:pre;margin-top:.75rem}
+/* Poll card (Übersicht mit Inline-Ergebnissen) */
+.poll-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:.85rem}
+.poll-card__header{display:flex;align-items:flex-start;gap:1rem;padding:.9rem 1.1rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.poll-card__info{flex:1;min-width:0}
+.poll-card__title{font-weight:700;font-size:1rem;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.poll-card__meta{font-size:.8rem;color:var(--muted)}
+.poll-card__actions{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.poll-card__votes{font-size:.85rem;font-weight:700;color:var(--pri);padding:.2rem .6rem;background:var(--bg);border-radius:99px;border:1px solid var(--border)}
+.poll-card__results{padding:.85rem 1.1rem}
+.poll-card__no-votes{font-size:.85rem;color:var(--muted);font-style:italic}
 /* ── Meme Gallery ─────────────────────────────────────────────────────────── */
 .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--bg)}
 .upload-area:hover,.upload-area.drag-over{border-color:var(--acc);background:#eef3f8}
@@ -422,10 +432,15 @@ function toast(msg, type="ok") {
 
 /* ── Load data ──────────────────────────────────────────────────────────── */
 async function loadAll() {
-  const res = await fetch(API+"/api/admin/quizzes", {headers:headers()});
-  allQuizzes = await res.json();
+  const [qRes, pRes] = await Promise.all([
+    fetch(API+"/api/admin/quizzes", {headers:headers()}),
+    fetch(API+"/api/admin/polls",   {headers:headers()}),
+  ]);
+  allQuizzes = await qRes.json();
+  polls      = await pRes.json();
   renderQuizList();
   populateSelects();
+  renderPollList();
 }
 
 function renderQuizList() {
@@ -648,28 +663,55 @@ async function loadPolls() {
 function renderPollList() {
   const el = document.getElementById("poll-list");
   if (!polls.length) { el.innerHTML='<p class="empty">Noch keine Umfragen vorhanden</p>'; return; }
-  el.innerHTML = polls.map(p => `
-    <div class="quiz-item">
-      <div class="quiz-item-info">
-        <div class="quiz-item-title">${esc(p.title)}</div>
-        <div class="quiz-item-meta">
-          ID: ${p.id} &bull;
-          <span class="badge">${p.option_count} Optionen</span> &bull;
-          <strong>${p.total_votes}</strong> Stimmen &bull;
-          <span class="poll-status poll-status--${p.active ? 'open' : 'closed'}">${p.active ? 'Offen' : 'Geschlossen'}</span>
-          ${p.multiple ? ' &bull; Mehrfachauswahl' : ''}
-          &bull; ${new Date(p.created_at).toLocaleDateString("de-DE")}
+
+  el.innerHTML = polls.map(p => {
+    const bars = p.options.map(o => {
+      const pct  = o.percentage ?? 0;
+      const w    = Math.max(pct, pct > 0 ? 3 : 0);
+      const bold = p.options.reduce((max, x) => x.votes > max.votes ? x : max, p.options[0]);
+      const isTop = p.total_votes > 0 && o.id === bold.id;
+      return `
+        <div class="poll-bar-row">
+          <div class="poll-bar-label">
+            <span style="${isTop ? 'font-weight:700;color:var(--pri)' : ''}">${esc(o.option_text)}</span>
+            <span style="flex-shrink:0;font-size:.8rem;color:var(--muted)">${o.votes} Stimmen (${pct}%)</span>
+          </div>
+          <div class="poll-bar-track">
+            <div class="poll-bar-fill" style="width:${w}%;${isTop ? 'background:var(--pri)' : ''}"></div>
+          </div>
+        </div>`;
+    }).join("");
+
+    return `
+      <div class="poll-card">
+        <div class="poll-card__header">
+          <div class="poll-card__info">
+            <div class="poll-card__title">
+              ${esc(p.title)}
+              <span class="poll-status poll-status--${p.active ? 'open' : 'closed'}">${p.active ? 'Offen' : 'Geschlossen'}</span>
+              ${p.multiple ? '<span class="badge" style="background:#7d3c98">Mehrfach</span>' : ''}
+            </div>
+            <div class="poll-card__meta">
+              ID: ${p.id} &bull; ${p.options.length} Optionen &bull;
+              erstellt ${new Date(p.created_at).toLocaleDateString("de-DE")}
+            </div>
+          </div>
+          <div class="poll-card__actions">
+            <span class="poll-card__votes">${p.total_votes} Stimmen</span>
+            <button class="btn btn-ghost btn-sm" onclick="openPollResults(${p.id})">Einbetten</button>
+            <button class="btn btn-ghost btn-sm" onclick="openPollEditor(${p.id})">Bearbeiten</button>
+            <button class="btn btn-ghost btn-sm" onclick="togglePoll(${p.id})"
+              style="color:${p.active ? 'var(--err)' : 'var(--ok)'}">
+              ${p.active ? 'Schließen' : 'Öffnen'}
+            </button>
+            <button class="btn btn-danger btn-sm" onclick="deletePoll(${p.id},'${esc(p.title)}')">Löschen</button>
+          </div>
         </div>
-      </div>
-      <div class="quiz-item-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openPollResults(${p.id})">Ergebnisse</button>
-        <button class="btn btn-ghost btn-sm" onclick="openPollEditor(${p.id})">Bearbeiten</button>
-        <button class="btn btn-ghost btn-sm" onclick="togglePoll(${p.id})" style="color:${p.active ? 'var(--err)' : 'var(--ok)'}">
-          ${p.active ? 'Schließen' : 'Öffnen'}
-        </button>
-        <button class="btn btn-danger btn-sm" onclick="deletePoll(${p.id},'${esc(p.title)}')">Löschen</button>
-      </div>
-    </div>`).join("");
+        <div class="poll-card__results">
+          ${p.total_votes > 0 ? bars : '<span class="poll-card__no-votes">Noch keine Stimmen abgegeben</span>'}
+        </div>
+      </div>`;
+  }).join("");
 }
 
 document.getElementById("btn-new-poll").addEventListener("click", () => {
@@ -766,31 +808,19 @@ async function deletePoll(id, title) {
 }
 
 async function openPollResults(id) {
-  const res = await fetch(API+"/api/admin/poll/"+id, {headers:headers()});
-  const poll = await res.json();
-  document.getElementById("poll-results-heading").textContent = poll.title;
-  const card = document.getElementById("poll-results-card");
+  const poll = polls.find(p => p.id === id) || await fetch(API+"/api/admin/poll/"+id, {headers:headers()}).then(r=>r.json());
+  document.getElementById("poll-results-heading").textContent = "Einbetten: "+poll.title;
   const embedCode = `<div class="dmun-poll" data-poll-id="${poll.id}" data-api-url="${API}"></div>\n<script src="${API}/static/poll-widget.js"><\/script>`;
+  const card = document.getElementById("poll-results-card");
   card.innerHTML = `
-    <p class="poll-total">${poll.total_votes} Stimme${poll.total_votes !== 1 ? 'n' : ''} insgesamt
-      &bull; <span class="poll-status poll-status--${poll.active ? 'open':'closed'}">${poll.active ? 'Offen':'Geschlossen'}</span>
-      ${poll.multiple ? '&bull; Mehrfachauswahl' : ''}
+    <p style="font-size:.875rem;margin-bottom:.75rem;color:var(--muted)">
+      Diesen Code in einen Ghost-Artikel über <strong>HTML-Karte</strong> einfügen:
     </p>
-    ${poll.options.map(o => `
-      <div class="poll-bar-row">
-        <div class="poll-bar-label">
-          <span>${esc(o.option_text)}</span>
-          <span style="flex-shrink:0;font-weight:700">${o.votes} (${o.percentage}%)</span>
-        </div>
-        <div class="poll-bar-track">
-          <div class="poll-bar-fill" style="width:${o.percentage}%">${o.percentage >= 12 ? o.percentage+'%' : ''}</div>
-        </div>
-      </div>`).join("")}
-    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
-      <p style="font-size:.875rem;margin-bottom:.5rem;font-weight:600">Embed-Code für Ghost:</p>
-      <div class="poll-embed-box">${esc(embedCode)}</div>
-      <button class="btn btn-ghost btn-sm mt-1" onclick="navigator.clipboard.writeText(${JSON.stringify(embedCode)}).then(()=>toast('Code kopiert'))">📋 Kopieren</button>
-    </div>`;
+    <div class="poll-embed-box">${esc(embedCode)}</div>
+    <button class="btn btn-ghost btn-sm mt-1"
+      onclick="navigator.clipboard.writeText(${JSON.stringify(embedCode)}).then(()=>toast('Code kopiert'))">
+      📋 Kopieren
+    </button>`;
   showPollView("results");
 }
 

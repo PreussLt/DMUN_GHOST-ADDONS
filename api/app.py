@@ -399,13 +399,10 @@ def create_app():
     @require_auth
     def api_list_polls():
         db = get_db()
-        rows = db.execute(
-            "SELECT p.*,"
-            " (SELECT COUNT(*) FROM poll_options WHERE poll_id = p.id) AS option_count,"
-            " (SELECT COUNT(*) FROM poll_votes   WHERE poll_id = p.id) AS total_votes"
-            " FROM polls p ORDER BY created_at DESC"
-        ).fetchall()
-        return jsonify([dict(r) for r in rows])
+        poll_ids = [r["id"] for r in db.execute(
+            "SELECT id FROM polls ORDER BY created_at DESC"
+        ).fetchall()]
+        return jsonify([_poll_with_results(db, pid, show_counts=True) for pid in poll_ids])
 
     @app.route("/api/admin/poll/<int:poll_id>")
     @require_auth
