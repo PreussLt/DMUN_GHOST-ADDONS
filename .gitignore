@@ -1,0 +1,22 @@
+# Credentials – niemals committen
+.cred
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Docker
+*.log
+
+# SQLite (lokale Dev-DB außerhalb Docker)
+*.db

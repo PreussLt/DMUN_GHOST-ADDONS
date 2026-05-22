@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DMUN Quiz Admin</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --pri:#1a3a5c;--acc:#2e86c1;--ok:#1e8449;--err:#c0392b;
+  --bg:#f0f4f8;--card:#fff;--border:#d5dde5;--text:#1a1a2e;--muted:#6b7280;
+  --radius:8px;
+}
+body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--acc);text-decoration:none}
+
+/* ── Layout ───────────────────────────────────────────────────────────────── */
+header{background:var(--pri);color:#fff;padding:1rem 1.5rem;display:flex;align-items:center;gap:1rem}
+header h1{font-size:1.2rem;font-weight:700}
+header span{opacity:.6;font-size:.85rem}
+.main{max-width:960px;margin:2rem auto;padding:0 1rem}
+
+/* ── Login ────────────────────────────────────────────────────────────────── */
+#login-screen{display:flex;justify-content:center;padding-top:6rem}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:2rem;width:100%;max-width:380px;box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.login-card h2{margin-bottom:1.5rem;font-size:1.3rem;color:var(--pri)}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+
+/* ── Buttons ──────────────────────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border:none;border-radius:var(--radius);font-size:.9rem;font-weight:600;cursor:pointer;transition:background .15s,transform .1s}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--acc);color:#fff}.btn-primary:hover{background:var(--pri)}
+.btn-success{background:var(--ok);color:#fff}.btn-success:hover{filter:brightness(.9)}
+.btn-danger{background:var(--err);color:#fff}.btn-danger:hover{filter:brightness(.9)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-ghost:hover{background:var(--bg)}
+.btn-sm{padding:.35rem .8rem;font-size:.8rem}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+
+/* ── Forms ────────────────────────────────────────────────────────────────── */
+.form-group{margin-bottom:1rem}
+label.label{display:block;font-weight:600;font-size:.85rem;margin-bottom:.3rem;color:var(--pri)}
+input[type=text],input[type=password],textarea{
+  width:100%;padding:.55rem .75rem;border:1px solid var(--border);
+  border-radius:var(--radius);font-size:.95rem;outline:none;
+  transition:border-color .15s
+}
+input:focus,textarea:focus{border-color:var(--acc)}
+textarea{resize:vertical;min-height:80px}
+.hint{font-size:.78rem;color:var(--muted);margin-top:.25rem}
+
+/* ── Toolbar ──────────────────────────────────────────────────────────────── */
+.toolbar{display:flex;gap:.75rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap}
+.toolbar h2{flex:1;font-size:1.15rem;color:var(--pri)}
+
+/* ── Quiz list ────────────────────────────────────────────────────────────── */
+.quiz-list{display:flex;flex-direction:column;gap:.75rem}
+.quiz-item{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+.quiz-item-info{flex:1}
+.quiz-item-title{font-weight:700;margin-bottom:.15rem}
+.quiz-item-meta{font-size:.8rem;color:var(--muted)}
+.quiz-item-actions{display:flex;gap:.5rem;flex-shrink:0}
+.badge{display:inline-block;padding:.15em .55em;border-radius:99px;font-size:.75rem;font-weight:700;background:var(--acc);color:#fff}
+
+/* ── Editor ───────────────────────────────────────────────────────────────── */
+.editor-section{margin-bottom:2rem}
+.editor-section h3{font-size:1rem;font-weight:700;color:var(--pri);border-bottom:2px solid var(--border);padding-bottom:.4rem;margin-bottom:1rem}
+.question-block{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:1rem}
+.question-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+.question-header span{font-weight:700;font-size:.85rem;color:var(--muted);flex:1}
+.answer-block{display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.5rem;background:#fff;padding:.6rem .75rem;border:1px solid var(--border);border-radius:calc(var(--radius) - 2px)}
+.answer-block input[type=text]{flex:1}
+.answer-correct-wrap{display:flex;align-items:center;gap:.3rem;font-size:.8rem;white-space:nowrap;padding-top:.4rem}
+.answer-correct-wrap input{accent-color:var(--ok)}
+.answer-expl{margin-top:.4rem;padding-left:1.2rem;width:100%}
+.answer-expl input{font-size:.85rem}
+
+/* ── Results ──────────────────────────────────────────────────────────────── */
+table{width:100%;border-collapse:collapse;font-size:.875rem}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--border)}
+th{font-weight:600;background:var(--bg);color:var(--muted)}
+
+/* ── Embed code ───────────────────────────────────────────────────────────── */
+.embed-box{background:#1e1e2e;color:#a6e3a1;padding:1rem;border-radius:var(--radius);font-family:monospace;font-size:.8rem;overflow-x:auto;white-space:pre}
+
+/* ── Tabs ─────────────────────────────────────────────────────────────────── */
+.tabs{display:flex;gap:.25rem;border-bottom:2px solid var(--border);margin-bottom:1.5rem}
+.tab-btn{background:none;border:none;padding:.6rem 1.1rem;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s}
+.tab-btn.active{color:var(--acc);border-bottom-color:var(--acc)}
+.tab-btn:hover{color:var(--acc)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+
+/* ── Toast ────────────────────────────────────────────────────────────────── */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:.75rem 1.25rem;border-radius:var(--radius);color:#fff;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .3s;z-index:999}
+#toast.show{opacity:1}
+#toast.ok{background:var(--ok)}#toast.err{background:var(--err)}
+
+/* ── Meme Gallery ─────────────────────────────────────────────────────────── */
+.upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--bg)}
+.upload-area:hover,.upload-area.drag-over{border-color:var(--acc);background:#eef3f8}
+.upload-area__icon{font-size:2.5rem;margin-bottom:.5rem}
+.upload-area__text{color:var(--muted);font-size:.95rem}
+.meme-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:1rem}
+.meme-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.05);display:flex;flex-direction:column}
+.meme-card__img{width:100%;aspect-ratio:1;object-fit:cover;display:block;cursor:zoom-in;transition:transform .2s}
+.meme-card__img:hover{transform:scale(1.03)}
+.meme-card__body{padding:.6rem .75rem;display:flex;align-items:center;gap:.4rem}
+.meme-card__title{flex:1;font-size:.8rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1000;align-items:center;justify-content:center;cursor:zoom-out}
+#lightbox.open{display:flex}
+#lightbox img{max-width:90vw;max-height:90vh;border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,.5)}
+#lightbox-close{position:absolute;top:1rem;right:1.25rem;color:#fff;font-size:2rem;cursor:pointer;line-height:1;background:none;border:none}
+/* ── Misc ─────────────────────────────────────────────────────────────────── */
+.empty{text-align:center;color:var(--muted);padding:3rem}
+.mt-1{margin-top:.5rem}.mt-2{margin-top:1rem}.gap-1{gap:.5rem}
+.flex{display:flex}.items-center{align-items:center}
+#app{display:none}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Flag_of_the_United_Nations.svg/40px-Flag_of_the_United_Nations.svg.png" height="28" alt="">
+  <h1>DMUN Quiz Admin</h1>
+  <span id="logged-in-user"></span>
+  <button class="btn btn-ghost btn-sm" id="logout-btn" style="margin-left:auto;color:#fff;border-color:rgba(255,255,255,.3)">Abmelden</button>
+</header>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <h2>Anmelden</h2>
+    <div class="form-group">
+      <label class="label">Benutzername</label>
+      <input id="inp-user" type="text" autocomplete="username" placeholder="admin">
+    </div>
+    <div class="form-group">
+      <label class="label">Passwort</label>
+      <input id="inp-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <p id="login-error" style="color:var(--err);font-size:.85rem;margin-bottom:.75rem;display:none">Falsche Zugangsdaten</p>
+    <button class="btn btn-primary" id="login-btn" style="width:100%">Anmelden</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" class="main">
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="quizzes">Quiz-Liste</button>
+    <button class="tab-btn" data-tab="editor">Editor</button>
+    <button class="tab-btn" data-tab="results">Ergebnisse</button>
+    <button class="tab-btn" data-tab="embed">Einbetten</button>
+    <button class="tab-btn" data-tab="memes">Meme-Galerie</button>
+  </div>
+
+  <!-- TAB: QUIZ LIST -->
+  <div class="tab-pane active" id="tab-quizzes">
+    <div class="toolbar">
+      <h2>Alle Quizze</h2>
+      <button class="btn btn-primary" id="btn-new-quiz">+ Neues Quiz</button>
+    </div>
+    <div id="quiz-list" class="quiz-list">
+      <p class="empty">Lade…</p>
+    </div>
+  </div>
+
+  <!-- TAB: EDITOR -->
+  <div class="tab-pane" id="tab-editor">
+    <div class="toolbar">
+      <h2 id="editor-title">Neues Quiz</h2>
+      <button class="btn btn-ghost btn-sm" id="btn-cancel-editor">Abbrechen</button>
+      <button class="btn btn-success" id="btn-save-quiz">Speichern</button>
+    </div>
+    <div class="card">
+      <div class="editor-section">
+        <h3>Allgemein</h3>
+        <div class="form-group">
+          <label class="label">Titel *</label>
+          <input id="quiz-title" type="text" placeholder="z.B. UN-Verfahrensregeln">
+        </div>
+        <div class="form-group">
+          <label class="label">Beschreibung</label>
+          <textarea id="quiz-desc" placeholder="Kurze Beschreibung des Quiz…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="label">Ghost-Artikel-Slug</label>
+          <input id="quiz-slug" type="text" placeholder="z.B. un-verfahren-quiz">
+          <p class="hint">Optionaler Verweis auf den Ghost-Artikel, in dem dieses Quiz eingebettet ist.</p>
+        </div>
+      </div>
+
+      <div class="editor-section">
+        <h3>Fragen</h3>
+        <div id="questions-container"></div>
+        <button class="btn btn-ghost mt-2" id="btn-add-question">+ Frage hinzufügen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: RESULTS -->
+  <div class="tab-pane" id="tab-results">
+    <div class="toolbar">
+      <h2>Ergebnisse</h2>
+      <select id="results-quiz-select" style="padding:.4rem .75rem;border:1px solid var(--border);border-radius:var(--radius)">
+        <option value="">– Quiz wählen –</option>
+      </select>
+    </div>
+    <div id="results-table-wrap" class="card">
+      <p class="empty">Bitte ein Quiz wählen</p>
+    </div>
+  </div>
+
+  <!-- TAB: EMBED -->
+  <div class="tab-pane" id="tab-embed">
+    <div class="toolbar">
+      <h2>Embed-Code</h2>
+      <select id="embed-quiz-select" style="padding:.4rem .75rem;border:1px solid var(--border);border-radius:var(--radius)">
+        <option value="">– Quiz wählen –</option>
+      </select>
+    </div>
+    <div class="card" id="embed-card">
+      <p class="empty">Bitte ein Quiz wählen</p>
+    </div>
+  </div>
+</div>
+
+  <!-- TAB: MEMES -->
+  <div class="tab-pane" id="tab-memes">
+    <div class="toolbar">
+      <h2>Meme-Galerie</h2>
+      <span id="meme-count" style="color:var(--muted);font-size:.875rem"></span>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem">
+      <div style="font-weight:700;font-size:1rem;color:var(--pri);border-bottom:2px solid var(--border);padding-bottom:.4rem;margin-bottom:1rem">Meme hochladen</div>
+      <div id="upload-area" class="upload-area">
+        <div class="upload-area__icon">🖼️</div>
+        <div class="upload-area__text">Bild hierher ziehen oder klicken<br><small>JPG, PNG, GIF, WebP – max. 10 MB</small></div>
+        <input type="file" id="meme-file-input" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" multiple>
+      </div>
+      <div class="form-group mt-2">
+        <label class="label">Titel (optional)</label>
+        <input id="meme-title" type="text" placeholder="z.B. Security Council Realness">
+      </div>
+      <button class="btn btn-primary" id="btn-upload-meme">Hochladen</button>
+      <span id="upload-status" style="margin-left:.75rem;font-size:.875rem;color:var(--muted)"></span>
+    </div>
+
+    <div id="meme-grid" class="meme-grid">
+      <p class="empty" style="grid-column:1/-1">Lade…</p>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <button id="lightbox-close" title="Schließen">✕</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ── State ──────────────────────────────────────────────────────────────── */
+const API = "{{ public_api_url }}";
+let auth = null;   // btoa("user:pass")
+let editingId = null;
+let allQuizzes = [];
+
+/* ── Auth ───────────────────────────────────────────────────────────────── */
+function headers() {
+  return { "Content-Type":"application/json", "Authorization":"Basic "+auth };
+}
+
+async function tryLogin(user, pass) {
+  auth = btoa(user+":"+pass);
+  const res = await fetch(API+"/api/admin/quizzes", { headers: headers() });
+  if (res.status === 401) { auth=null; return false; }
+  return true;
+}
+
+document.getElementById("login-btn").addEventListener("click", async () => {
+  const u = document.getElementById("inp-user").value.trim();
+  const p = document.getElementById("inp-pass").value;
+  const ok = await tryLogin(u, p);
+  if (ok) {
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    document.getElementById("logged-in-user").textContent = u;
+    sessionStorage.setItem("dmun_admin_auth", btoa(u+":"+p));
+    loadAll();
+  } else {
+    document.getElementById("login-error").style.display = "block";
+  }
+});
+
+document.getElementById("inp-pass").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("login-btn").click(); });
+
+document.getElementById("logout-btn").addEventListener("click", () => {
+  auth=null; sessionStorage.removeItem("dmun_admin_auth");
+  document.getElementById("login-screen").style.display="flex";
+  document.getElementById("app").style.display="none";
+});
+
+// Auto-login from sessionStorage
+const saved = sessionStorage.getItem("dmun_admin_auth");
+if (saved) {
+  const [u,p] = atob(saved).split(":");
+  tryLogin(u,p).then(ok => {
+    if (ok) {
+      document.getElementById("login-screen").style.display="none";
+      document.getElementById("app").style.display="block";
+      document.getElementById("logged-in-user").textContent=u;
+      loadAll();
+    }
+  });
+}
+
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn,.tab-pane").forEach(el => el.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+  });
+});
+
+function switchTab(name) {
+  document.querySelectorAll(".tab-btn,.tab-pane").forEach(el => el.classList.remove("active"));
+  document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add("active");
+  document.getElementById("tab-"+name).classList.add("active");
+}
+
+/* ── Toast ──────────────────────────────────────────────────────────────── */
+let toastTimer;
+function toast(msg, type="ok") {
+  const t = document.getElementById("toast");
+  t.textContent=msg; t.className="show "+type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className="", 2800);
+}
+
+/* ── Load data ──────────────────────────────────────────────────────────── */
+async function loadAll() {
+  const res = await fetch(API+"/api/admin/quizzes", {headers:headers()});
+  allQuizzes = await res.json();
+  renderQuizList();
+  populateSelects();
+}
+
+function renderQuizList() {
+  const el = document.getElementById("quiz-list");
+  if (!allQuizzes.length) { el.innerHTML='<p class="empty">Noch keine Quizze vorhanden</p>'; return; }
+  el.innerHTML = allQuizzes.map(q => `
+    <div class="quiz-item">
+      <div class="quiz-item-info">
+        <div class="quiz-item-title">${esc(q.title)}</div>
+        <div class="quiz-item-meta">
+          ID: ${q.id} &bull;
+          <span class="badge">${q.question_count} Fragen</span>
+          ${q.ghost_slug ? ` &bull; Slug: <code>${esc(q.ghost_slug)}</code>` : ""}
+          &bull; ${new Date(q.created_at).toLocaleDateString("de-DE")}
+        </div>
+      </div>
+      <div class="quiz-item-actions">
+        <button class="btn btn-ghost btn-sm" onclick="openEditor(${q.id})">Bearbeiten</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteQuiz(${q.id},'${esc(q.title)}')">Löschen</button>
+      </div>
+    </div>`).join("");
+}
+
+function populateSelects() {
+  ["results-quiz-select","embed-quiz-select"].forEach(id => {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    sel.innerHTML = '<option value="">– Quiz wählen –</option>' +
+      allQuizzes.map(q => `<option value="${q.id}" ${q.id==current?'selected':''}>${esc(q.title)}</option>`).join("");
+  });
+}
+
+/* ── Editor ─────────────────────────────────────────────────────────────── */
+document.getElementById("btn-new-quiz").addEventListener("click", () => {
+  editingId=null;
+  document.getElementById("editor-title").textContent="Neues Quiz";
+  document.getElementById("quiz-title").value="";
+  document.getElementById("quiz-desc").value="";
+  document.getElementById("quiz-slug").value="";
+  document.getElementById("questions-container").innerHTML="";
+  switchTab("editor");
+});
+
+document.getElementById("btn-cancel-editor").addEventListener("click", () => switchTab("quizzes"));
+
+document.getElementById("btn-add-question").addEventListener("click", () => addQuestion());
+
+async function openEditor(id) {
+  const res = await fetch(API+"/api/admin/quiz/"+id, {headers:headers()});
+  const quiz = await res.json();
+  editingId = id;
+  document.getElementById("editor-title").textContent = "Bearbeiten: "+quiz.title;
+  document.getElementById("quiz-title").value = quiz.title;
+  document.getElementById("quiz-desc").value = quiz.description||"";
+  document.getElementById("quiz-slug").value = quiz.ghost_slug||"";
+  document.getElementById("questions-container").innerHTML="";
+  quiz.questions.forEach(q => addQuestion(q));
+  switchTab("editor");
+}
+
+let qCount=0;
+function addQuestion(data={}) {
+  qCount++;
+  const n = qCount;
+  const container = document.getElementById("questions-container");
+  const div = document.createElement("div");
+  div.className = "question-block";
+  div.dataset.qn = n;
+  div.innerHTML = `
+    <div class="question-header">
+      <span>Frage #${n}</span>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="this.closest('.question-block').remove()">Entfernen</button>
+    </div>
+    <div class="form-group">
+      <label class="label">Frage</label>
+      <textarea class="q-text" rows="2" placeholder="Fragetext…">${esc(data.question_text||"")}</textarea>
+    </div>
+    <div class="answers-wrap"></div>
+    <button type="button" class="btn btn-ghost btn-sm mt-1" onclick="addAnswer(this.previousElementSibling)">+ Antwort</button>`;
+  container.appendChild(div);
+  const wrap = div.querySelector(".answers-wrap");
+  (data.answers||[]).forEach(a => addAnswer(wrap, a));
+  if (!data.answers || !data.answers.length) { addAnswer(wrap); addAnswer(wrap); }
+}
+
+function addAnswer(wrap, data={}) {
+  const div = document.createElement("div");
+  div.className = "answer-block";
+  div.innerHTML = `
+    <div style="flex:1">
+      <input type="text" class="a-text" placeholder="Antworttext" value="${esc(data.answer_text||"")}">
+      <div class="answer-expl">
+        <input type="text" class="a-expl" placeholder="Erklärung (optional, bei falscher Antwort angezeigt)" value="${esc(data.explanation||"")}">
+      </div>
+    </div>
+    <label class="answer-correct-wrap">
+      <input type="radio" name="correct_${wrap.closest('.question-block').dataset.qn}" class="a-correct" ${data.is_correct?"checked":""}>
+      Richtig
+    </label>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  wrap.appendChild(div);
+}
+
+document.getElementById("btn-save-quiz").addEventListener("click", async () => {
+  const title = document.getElementById("quiz-title").value.trim();
+  if (!title) { toast("Titel fehlt","err"); return; }
+
+  const questions = [];
+  document.querySelectorAll(".question-block").forEach(qBlock => {
+    const qText = qBlock.querySelector(".q-text").value.trim();
+    if (!qText) return;
+    const answers = [];
+    qBlock.querySelectorAll(".answer-block").forEach(aBlock => {
+      const aText = aBlock.querySelector(".a-text").value.trim();
+      if (!aText) return;
+      answers.push({
+        answer_text: aText,
+        is_correct: aBlock.querySelector(".a-correct").checked,
+        explanation: aBlock.querySelector(".a-expl").value.trim()
+      });
+    });
+    questions.push({ question_text: qText, answers });
+  });
+
+  const payload = {
+    title,
+    description: document.getElementById("quiz-desc").value.trim(),
+    ghost_slug: document.getElementById("quiz-slug").value.trim(),
+    questions
+  };
+
+  const url = editingId ? API+"/api/admin/quiz/"+editingId : API+"/api/admin/quiz";
+  const method = editingId ? "PUT" : "POST";
+  const res = await fetch(url, { method, headers:headers(), body:JSON.stringify(payload) });
+  if (res.ok) {
+    toast(editingId ? "Quiz aktualisiert" : "Quiz erstellt");
+    await loadAll();
+    switchTab("quizzes");
+  } else {
+    toast("Fehler beim Speichern","err");
+  }
+});
+
+async function deleteQuiz(id, title) {
+  if (!confirm(`Quiz "${title}" wirklich löschen?`)) return;
+  await fetch(API+"/api/admin/quiz/"+id, {method:"DELETE", headers:headers()});
+  toast("Quiz gelöscht");
+  await loadAll();
+}
+
+/* ── Results ─────────────────────────────────────────────────────────────── */
+document.getElementById("results-quiz-select").addEventListener("change", loadResults);
+
+async function loadResults() {
+  const id = document.getElementById("results-quiz-select").value;
+  const wrap = document.getElementById("results-table-wrap");
+  if (!id) { wrap.innerHTML='<p class="empty">Bitte ein Quiz wählen</p>'; return; }
+  const res = await fetch(API+"/api/admin/quiz/"+id+"/results", {headers:headers()});
+  const rows = await res.json();
+  if (!rows.length) { wrap.innerHTML='<p class="empty">Noch keine Ergebnisse</p>'; return; }
+  const avg = (rows.reduce((s,r)=>s+r.score,0)/rows.length).toFixed(1);
+  wrap.innerHTML = `
+    <p style="margin-bottom:1rem;color:var(--muted);font-size:.875rem">
+      ${rows.length} Teilnahmen &bull; Ø Punkte: ${avg}
+    </p>
+    <table>
+      <thead><tr><th>#</th><th>Datum</th><th>Score</th><th>%</th><th>Session</th></tr></thead>
+      <tbody>${rows.map((r,i) => `
+        <tr>
+          <td>${i+1}</td>
+          <td>${new Date(r.completed_at).toLocaleString("de-DE")}</td>
+          <td>${r.score} / ${r.max_score}</td>
+          <td>${r.max_score?Math.round(r.score/r.max_score*100):0}%</td>
+          <td style="font-family:monospace;font-size:.75rem">${r.session_id||"-"}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+/* ── Embed ───────────────────────────────────────────────────────────────── */
+document.getElementById("embed-quiz-select").addEventListener("change", () => {
+  const id = document.getElementById("embed-quiz-select").value;
+  const card = document.getElementById("embed-card");
+  if (!id) { card.innerHTML='<p class="empty">Bitte ein Quiz wählen</p>'; return; }
+  const code = `<!-- CSS einmalig pro Seite (oder in Ghost > Code Injection > Site Header) -->
+<link rel="stylesheet" href="${API}/static/quiz-widget.css">
+
+<!-- Quiz einbetten (diese beiden Zeilen in deinen Ghost-Artikel) -->
+<div class="dmun-quiz" data-quiz-id="${id}" data-api-url="${API}"></div>
+<script src="${API}/static/quiz-widget.js"><\/script>`;
+  card.innerHTML = `
+    <p style="margin-bottom:.75rem;font-size:.9rem">Diesen Code in einen Ghost-Artikel über <strong>HTML-Karte</strong> einfügen:</p>
+    <div class="embed-box">${esc(code)}</div>
+    <button class="btn btn-ghost btn-sm mt-2" onclick="navigator.clipboard.writeText(${JSON.stringify(code)}).then(()=>toast('Code kopiert'))">
+      📋 Kopieren
+    </button>`;
+});
+
+/* ── Utils ───────────────────────────────────────────────────────────────── */
+function esc(str) {
+  const d=document.createElement("div"); d.textContent=String(str||""); return d.innerHTML;
+}
+
+/* ── Memes ───────────────────────────────────────────────────────────────── */
+let memes = [];
+
+async function loadMemes() {
+  const res = await fetch(API+"/api/memes");
+  memes = await res.json();
+  renderMemeGrid();
+}
+
+function renderMemeGrid() {
+  const grid = document.getElementById("meme-grid");
+  document.getElementById("meme-count").textContent = memes.length ? `${memes.length} Memes` : "";
+  if (!memes.length) { grid.innerHTML='<p class="empty" style="grid-column:1/-1">Noch keine Memes hochgeladen</p>'; return; }
+  grid.innerHTML = memes.map(m => `
+    <div class="meme-card">
+      <img class="meme-card__img" src="${esc(m.url)}" alt="${esc(m.title)}" loading="lazy" onclick="openLightbox('${esc(m.url)}')">
+      <div class="meme-card__body">
+        <span class="meme-card__title" title="${esc(m.title)}">${esc(m.title||"–")}</span>
+        <button class="btn btn-danger btn-sm" onclick="deleteMeme(${m.id})">✕</button>
+      </div>
+    </div>`).join("");
+}
+
+async function deleteMeme(id) {
+  if (!confirm("Meme löschen?")) return;
+  await fetch(API+"/api/admin/meme/"+id, {method:"DELETE", headers:headers()});
+  toast("Meme gelöscht");
+  await loadMemes();
+}
+
+// Upload
+const uploadArea = document.getElementById("upload-area");
+const fileInput  = document.getElementById("meme-file-input");
+
+uploadArea.addEventListener("click", () => fileInput.click());
+uploadArea.addEventListener("dragover", e => { e.preventDefault(); uploadArea.classList.add("drag-over"); });
+uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("drag-over"));
+uploadArea.addEventListener("drop", e => {
+  e.preventDefault(); uploadArea.classList.remove("drag-over");
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener("change", () => { if (fileInput.files.length) handleFiles(fileInput.files); });
+
+document.getElementById("btn-upload-meme").addEventListener("click", () => fileInput.click());
+
+async function handleFiles(files) {
+  const status = document.getElementById("upload-status");
+  const title  = document.getElementById("meme-title").value.trim();
+  let done = 0;
+  status.textContent = `0 / ${files.length} hochgeladen…`;
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("title", title || file.name.replace(/\.[^.]+$/, ""));
+    const res = await fetch(API+"/api/admin/meme", { method:"POST", headers:{"Authorization":"Basic "+auth}, body:fd });
+    if (res.ok) done++;
+    status.textContent = `${done} / ${files.length} hochgeladen…`;
+  }
+  toast(`${done} Meme(s) hochgeladen`);
+  status.textContent = "";
+  document.getElementById("meme-title").value = "";
+  fileInput.value = "";
+  await loadMemes();
+}
+
+// Tab switch → load memes
+document.querySelector('.tab-btn[data-tab="memes"]').addEventListener("click", loadMemes);
+
+// Lightbox
+function openLightbox(url) {
+  document.getElementById("lightbox-img").src = url;
+  document.getElementById("lightbox").classList.add("open");
+}
+document.getElementById("lightbox").addEventListener("click", () => document.getElementById("lightbox").classList.remove("open"));
+document.getElementById("lightbox-close").addEventListener("click", e => { e.stopPropagation(); document.getElementById("lightbox").classList.remove("open"); });
+document.addEventListener("keydown", e => { if (e.key==="Escape") document.getElementById("lightbox").classList.remove("open"); });
+</script>
+</body>
+</html>

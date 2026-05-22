@@ -1,0 +1,16 @@
+services:
+  api:
+    build: ./api
+    container_name: dmun-quiz-api
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-5000}:5000"
+    volumes:
+      - quiz-data:/data
+    env_file:
+      - .env
+      - .cred
+
+volumes:
+  quiz-data:
+    driver: local
