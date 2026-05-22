@@ -59,10 +59,10 @@
 
       return `
         <div class="${qCls}" data-qid="${q.id}">
-          <p class="${CSS_NS}__question-text">
+          <div class="${CSS_NS}__question-header">
             <span class="${CSS_NS}__question-num">${idx + 1}</span>
-            ${esc(q.question_text)}
-          </p>
+            <p class="${CSS_NS}__question-text">${esc(q.question_text)}</p>
+          </div>
           <div class="${CSS_NS}__answers">
             ${q.answers.map((a) => renderAnswer(q, a, fb)).join("")}
           </div>
