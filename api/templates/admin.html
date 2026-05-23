@@ -120,6 +120,21 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 .poll-card__votes{font-size:.85rem;font-weight:700;color:var(--pri);padding:.2rem .6rem;background:var(--bg);border-radius:99px;border:1px solid var(--border)}
 .poll-card__results{padding:.85rem 1.1rem}
 .poll-card__no-votes{font-size:.85rem;color:var(--muted);font-style:italic}
+/* ── Meme Embed ───────────────────────────────────────────────────────────── */
+.meme-embed-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.5rem;overflow:hidden}
+.meme-embed-section__header{display:flex;align-items:center;gap:.75rem;padding:.85rem 1.1rem;cursor:pointer;user-select:none;border-bottom:1px solid transparent;transition:background .15s}
+.meme-embed-section__header:hover{background:var(--bg)}
+.meme-embed-section__header.open{border-bottom-color:var(--border)}
+.meme-embed-section__title{font-weight:700;font-size:.9rem;flex:1}
+.meme-embed-section__arrow{font-size:.75rem;color:var(--muted);transition:transform .2s}
+.meme-embed-section__header.open .meme-embed-section__arrow{transform:rotate(180deg)}
+.meme-embed-section__body{display:none;padding:1.1rem}
+.meme-embed-section__body.open{display:block}
+.meme-embed-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.9rem 1rem;margin-bottom:.85rem}
+.meme-embed-card:last-child{margin-bottom:0}
+.meme-embed-card__title{font-weight:700;font-size:.85rem;color:var(--pri);margin-bottom:.3rem}
+.meme-embed-card__desc{font-size:.78rem;color:var(--muted);margin-bottom:.6rem}
+.embed-code-box{background:#1e1e2e;color:#a6e3a1;padding:.85rem 1rem;border-radius:var(--radius);font-family:monospace;font-size:.75rem;overflow-x:auto;white-space:pre;margin-bottom:.5rem}
 /* ── Meme Moderation ──────────────────────────────────────────────────────── */
 .pending-section{background:#fff8f0;border:1px solid #f0c070;border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1.5rem}
 .pending-section__header{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem}
@@ -339,6 +354,48 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
     <div class="toolbar">
       <h2>Meme-Galerie</h2>
       <span id="meme-count" style="color:var(--muted);font-size:.875rem"></span>
+    </div>
+
+    <!-- Einbetten -->
+    <div class="meme-embed-section">
+      <div class="meme-embed-section__header" id="meme-embed-toggle" onclick="toggleMemeEmbed()">
+        <span class="meme-embed-section__title">📋 Einbetten in Ghost</span>
+        <span class="meme-embed-section__arrow">▼</span>
+      </div>
+      <div class="meme-embed-section__body" id="meme-embed-body">
+
+        <div class="meme-embed-card">
+          <div class="meme-embed-card__title">Nur-Lese-Galerie</div>
+          <div class="meme-embed-card__desc">Zeigt alle freigegebenen Memes – kein Upload für Besucher.</div>
+          <div class="embed-code-box" id="embed-gallery-code"></div>
+          <button class="btn btn-ghost btn-sm" onclick="copyEmbed('embed-gallery-code')">📋 Kopieren</button>
+        </div>
+
+        <div class="meme-embed-card">
+          <div class="meme-embed-card__title">Upload + Galerie</div>
+          <div class="meme-embed-card__desc">Besucher können Memes hochladen (Status: ausstehend bis zur Freigabe).</div>
+          <div class="embed-code-box" id="embed-upload-code"></div>
+          <button class="btn btn-ghost btn-sm" onclick="copyEmbed('embed-upload-code')">📋 Kopieren</button>
+          <div style="margin-top:.5rem">
+            <label class="label" style="display:inline;font-size:.8rem">Spalten:&nbsp;</label>
+            <select id="embed-cols" onchange="renderMemeEmbedCodes()"
+              style="padding:.2rem .5rem;border:1px solid var(--border);border-radius:5px;font-size:.8rem">
+              <option value="2">2</option>
+              <option value="3" selected>3</option>
+              <option value="4">4</option>
+            </select>
+            &nbsp;&nbsp;
+            <label class="label" style="display:inline;font-size:.8rem">Titel:&nbsp;</label>
+            <input id="embed-title" type="text" placeholder="Meme-Galerie" oninput="renderMemeEmbedCodes()"
+              style="width:180px;padding:.2rem .5rem;border:1px solid var(--border);border-radius:5px;font-size:.8rem">
+            &nbsp;&nbsp;
+            <label class="label" style="display:inline;font-size:.8rem">Upload-Token:&nbsp;</label>
+            <input id="embed-token" type="text" placeholder="leer = kein Token" oninput="renderMemeEmbedCodes()"
+              style="width:160px;padding:.2rem .5rem;border:1px solid var(--border);border-radius:5px;font-size:.8rem">
+          </div>
+        </div>
+
+      </div>
     </div>
 
     <!-- Ausstehende Memes -->
@@ -963,8 +1020,50 @@ async function handleFiles(files) {
   await loadMemes();
 }
 
-// Tab switch → load memes
-document.querySelector('.tab-btn[data-tab="memes"]').addEventListener("click", loadMemes);
+// Tab switch → load memes + render embed codes
+document.querySelector('.tab-btn[data-tab="memes"]').addEventListener("click", () => {
+  loadMemes();
+  renderMemeEmbedCodes();
+});
+
+function toggleMemeEmbed() {
+  const hdr  = document.getElementById("meme-embed-toggle");
+  const body = document.getElementById("meme-embed-body");
+  hdr.classList.toggle("open");
+  body.classList.toggle("open");
+  if (body.classList.contains("open")) renderMemeEmbedCodes();
+}
+
+function renderMemeEmbedCodes() {
+  const cols  = document.getElementById("embed-cols")?.value  || "3";
+  const title = document.getElementById("embed-title")?.value || "Meme-Galerie";
+  const token = document.getElementById("embed-token")?.value || "";
+
+  const galleryCode =
+`<div class="dmun-memes"
+     data-api-url="${API}"
+     data-columns="${cols}">
+</div>
+<script src="${API}/static/meme-gallery.js"><\/script>`;
+
+  const uploadCode =
+`<div class="dmun-mu"
+     data-api-url="${API}"
+     data-title="${esc(title)}"
+     data-columns="${cols}"${token ? `\n     data-upload-token="${esc(token)}"` : ""}>
+</div>
+<script src="${API}/static/meme-upload-gallery.js"><\/script>`;
+
+  const g = document.getElementById("embed-gallery-code");
+  const u = document.getElementById("embed-upload-code");
+  if (g) g.textContent = galleryCode;
+  if (u) u.textContent = uploadCode;
+}
+
+function copyEmbed(elId) {
+  const text = document.getElementById(elId)?.textContent || "";
+  navigator.clipboard.writeText(text).then(() => toast("Code kopiert"));
+}
 
 // Lightbox
 function openLightbox(url) {
