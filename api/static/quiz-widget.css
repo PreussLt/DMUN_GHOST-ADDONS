@@ -28,25 +28,25 @@
 
 /* ── Outer Card ──────────────────────────────────────────── */
 .dmun-quiz__inner {
-  background: #f8fafc;
-  border: 1px solid var(--dmun-border);
-  border-radius: var(--dmun-radius);
-  box-shadow: var(--dmun-shadow);
-  overflow: hidden;
+  background: transparent; /* Entfernt den grauen Hintergrund für mehr Kontrast der Kästen */
+  border: none;
+  box-shadow: none;
+  overflow: visible;
 }
 
 /* ── Header ──────────────────────────────────────────────── */
 .dmun-quiz__header {
   background: var(--dmun-primary);
   color: #fff;
-  padding: 2rem 2.5rem;
-  margin-bottom: 0;
-  border-radius: 0;
+  padding: 2.5rem;
+  margin-bottom: 3rem;
+  border-radius: var(--dmun-radius);
+  box-shadow: 0 4px 15px rgba(12, 70, 149, 0.2);
 }
 
 .dmun-quiz__title {
   margin: 0 0 .5rem;
-  font-size: 2.4rem;
+  font-size: 2.6rem;
   font-weight: 800;
   letter-spacing: -.01em;
 }
@@ -54,16 +54,16 @@
 .dmun-quiz__desc {
   margin: 0;
   opacity: .9;
-  font-size: 1.6rem;
+  font-size: 1.7rem;
   line-height: 1.5;
 }
 
 /* ── Form Container ──────────────────────────────────────── */
 .dmun-quiz__form {
-  padding: 2.5rem;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 3.5rem; /* Größerer Abstand zwischen den Fragen */
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -72,16 +72,17 @@
 
 .dmun-quiz__question {
   background: #ffffff;
-  border: 1.5px solid #cbd5e1; /* Etwas dunklerer Rahmen */
+  border: 2px solid #e2e8f0; /* Deutlicherer Rahmen */
   border-radius: var(--dmun-radius);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08); /* Stärkerer Schatten für mehr Tiefe */
   overflow: hidden;
-  transition: transform .2s, box-shadow .2s;
+  transition: transform .2s, box-shadow .2s, border-color .2s;
 }
 
 .dmun-quiz__question:hover {
+  transform: translateY(-2px);
   border-color: var(--dmun-accent);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
 }
 
 /* Farbiger Top-Balken als Statusindikator */
@@ -276,15 +277,30 @@
 
 /* ── Ergebnis-Block ──────────────────────────────────────── */
 .dmun-quiz__result {
-  margin: 0;
-  padding: 3rem 2.5rem;
+  margin-top: 5rem; /* Großer Abstand zum Quiz */
+  padding: 4rem 3rem;
   text-align: center;
-  background: #ffffff;
-  border-top: 1px solid var(--dmun-border);
+  background: #f0f7ff; /* Leichter Blauton zur Abhebung */
+  border: 3px solid var(--dmun-primary); /* Dicker Rahmen in Primärfarbe */
+  border-radius: var(--dmun-radius);
+  box-shadow: 0 20px 50px rgba(12, 70, 149, 0.15); /* Sehr starker, farbiger Schatten */
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Dekorativer Akzent für den Ergebnisblock */
+.dmun-quiz__result::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 8px;
+  background: var(--dmun-primary);
 }
 
 .dmun-quiz__result-emoji { font-size: 5rem; line-height: 1; }
