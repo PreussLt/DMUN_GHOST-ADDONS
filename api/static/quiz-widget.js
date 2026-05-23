@@ -194,18 +194,18 @@ div.dmun-quiz .dmun-quiz__badge--err { background: var(--dmun-wrong) !important;
 div.dmun-quiz .dmun-quiz__explanation {
   margin: 0 2rem 2rem !important;
   padding: 1.5rem !important;
-  border: 1px solid #fecaca !important;
-  border-left: 6px solid #ef4444 !important;
+  border: 1px solid #bae6fd !important;
+  border-left: 6px solid #0ea5e9 !important;
   border-radius: 8px !important;
-  background: #fff5f5 !important;
-  color: #9b1c1c !important;
+  background: #f0f9ff !important;
+  color: #0369a1 !important;
   display: flex !important;
   align-items: flex-start !important;
   gap: 1rem !important;
   font-size: 1.55rem !important;
   font-weight: 500 !important;
   line-height: 1.6 !important;
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.08) !important;
+  box-shadow: 0 2px 4px rgba(14, 165, 233, 0.08) !important;
 }
 div.dmun-quiz .dmun-quiz__explanation::before {
   content: "ℹ" !important;
@@ -215,7 +215,7 @@ div.dmun-quiz .dmun-quiz__explanation::before {
   justify-content: center !important;
   width: 1.6em !important;
   height: 1.6em !important;
-  background: #ef4444 !important;
+  background: #0ea5e9 !important;
   color: #fff !important;
   border-radius: 5px !important;
   font-size: 1.4rem !important;
