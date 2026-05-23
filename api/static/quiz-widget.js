@@ -66,7 +66,7 @@
           <div class="${CSS_NS}__answers">
             ${q.answers.map((a) => renderAnswer(q, a, fb)).join("")}
           </div>
-          ${fb && fb.explanation && !fb.is_correct
+          ${fb && fb.explanation
             ? `<p class="${CSS_NS}__explanation">${esc(fb.explanation)}</p>`
             : ""}
         </div>`;

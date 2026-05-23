@@ -69,7 +69,7 @@
       ]
     },
     {
-      "question_text": "Wofür steht die Abkürzung „ECOSOC"?",
+      "question_text": "Wofür steht die Abkürzung „ECOSOC“?",
       "answers": [
         {
           "answer_text": "Economic and Social Council",
@@ -95,7 +95,7 @@
       ]
     },
     {
-      "question_text": "Was versteht man bei einer MUN-Konferenz unter einem „Point of Order"?",
+      "question_text": "Was versteht man bei einer MUN-Konferenz unter einem „Point of Order“?",
       "answers": [
         { "answer_text": "Ein Antrag auf Vertagung der Debatte", "is_correct": false, "explanation": "" },
         {
@@ -108,7 +108,7 @@
       ]
     },
     {
-      "question_text": "Was ist ein „Working Paper" bei einer MUN-Konferenz?",
+      "question_text": "Was ist ein „Working Paper“ bei einer MUN-Konferenz?",
       "answers": [
         { "answer_text": "Ein offiziell verabschiedeter Resolutionsentwurf", "is_correct": false, "explanation": "" },
         {
@@ -121,7 +121,7 @@
       ]
     },
     {
-      "question_text": "Was bedeutet „Konsens" in UN-Abstimmungen?",
+      "question_text": "Was bedeutet „Konsens“ in UN-Abstimmungen?",
       "answers": [
         { "answer_text": "Eine Zweidrittelmehrheit der anwesenden Mitgliedstaaten", "is_correct": false, "explanation": "" },
         {
