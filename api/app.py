@@ -318,20 +318,41 @@ def create_app():
 
     @app.route("/api/memes")
     def api_list_memes():
-        """Öffentlich: nur freigegebene Memes."""
+        """Öffentlich: nur freigegebene Memes mit Vote-Counts."""
         db = get_db()
+        session_id = request.args.get("session_id", "")
         rows = db.execute(
-            "SELECT * FROM memes WHERE status = 'approved' ORDER BY uploaded_at DESC"
+            "SELECT m.*,"
+            " COALESCE((SELECT COUNT(*) FROM meme_votes WHERE meme_id=m.id AND vote=1),  0) AS upvotes,"
+            " COALESCE((SELECT COUNT(*) FROM meme_votes WHERE meme_id=m.id AND vote=-1), 0) AS downvotes"
+            " FROM memes m WHERE m.status = 'approved' ORDER BY m.uploaded_at DESC"
         ).fetchall()
         base = app.config["PUBLIC_API_URL"].rstrip("/")
-        return jsonify([{**dict(r), "url": f"{base}/uploads/{r['filename']}"} for r in rows])
+        result = []
+        for r in rows:
+            d = {**dict(r), "url": f"{base}/uploads/{r['filename']}"}
+            if session_id:
+                v = db.execute(
+                    "SELECT vote FROM meme_votes WHERE meme_id=? AND session_id=?",
+                    (r["id"], session_id),
+                ).fetchone()
+                d["user_vote"] = v["vote"] if v else 0
+            else:
+                d["user_vote"] = 0
+            result.append(d)
+        return jsonify(result)
 
     @app.route("/api/admin/memes")
     @require_auth
     def api_admin_list_memes():
-        """Admin: alle Memes mit Status."""
+        """Admin: alle Memes mit Status und Vote-Counts."""
         db = get_db()
-        rows = db.execute("SELECT * FROM memes ORDER BY uploaded_at DESC").fetchall()
+        rows = db.execute(
+            "SELECT m.*,"
+            " COALESCE((SELECT COUNT(*) FROM meme_votes WHERE meme_id=m.id AND vote=1),  0) AS upvotes,"
+            " COALESCE((SELECT COUNT(*) FROM meme_votes WHERE meme_id=m.id AND vote=-1), 0) AS downvotes"
+            " FROM memes m ORDER BY m.uploaded_at DESC"
+        ).fetchall()
         base = app.config["PUBLIC_API_URL"].rstrip("/")
         return jsonify([{**dict(r), "url": f"{base}/uploads/{r['filename']}"} for r in rows])
 
@@ -347,6 +368,65 @@ def create_app():
             if provided != token:
                 return jsonify({"error": "Ungültiger Upload-Token"}), 403
         return _handle_meme_upload(status="pending")
+
+    @app.route("/api/memes/<int:meme_id>/vote", methods=["POST"])
+    def api_vote_meme(meme_id):
+        """Öffentlich: Up-/Downvote für ein Meme abgeben oder wechseln."""
+        data = request.get_json(silent=True) or {}
+        db = get_db()
+
+        if not db.execute(
+            "SELECT id FROM memes WHERE id=? AND status='approved'", (meme_id,)
+        ).fetchone():
+            return jsonify({"error": "Nicht gefunden"}), 404
+
+        session_id = (data.get("session_id") or "").strip()
+        if not session_id:
+            return jsonify({"error": "session_id fehlt"}), 400
+
+        vote = data.get("vote")
+        if vote not in (1, -1, 0):
+            return jsonify({"error": "vote muss 1, -1 oder 0 sein"}), 400
+
+        existing = db.execute(
+            "SELECT vote FROM meme_votes WHERE meme_id=? AND session_id=?",
+            (meme_id, session_id),
+        ).fetchone()
+
+        if vote == 0 or (existing and existing["vote"] == vote):
+            db.execute(
+                "DELETE FROM meme_votes WHERE meme_id=? AND session_id=?",
+                (meme_id, session_id),
+            )
+        elif existing:
+            db.execute(
+                "UPDATE meme_votes SET vote=?, voted_at=CURRENT_TIMESTAMP"
+                " WHERE meme_id=? AND session_id=?",
+                (vote, meme_id, session_id),
+            )
+        else:
+            db.execute(
+                "INSERT INTO meme_votes (meme_id, session_id, vote) VALUES (?,?,?)",
+                (meme_id, session_id, vote),
+            )
+        db.commit()
+
+        counts = db.execute(
+            "SELECT"
+            " COALESCE((SELECT COUNT(*) FROM meme_votes WHERE meme_id=? AND vote=1),  0) AS upvotes,"
+            " COALESCE((SELECT COUNT(*) FROM meme_votes WHERE meme_id=? AND vote=-1), 0) AS downvotes",
+            (meme_id, meme_id),
+        ).fetchone()
+        current = db.execute(
+            "SELECT vote FROM meme_votes WHERE meme_id=? AND session_id=?",
+            (meme_id, session_id),
+        ).fetchone()
+
+        return jsonify({
+            "upvotes":   counts["upvotes"],
+            "downvotes": counts["downvotes"],
+            "user_vote": current["vote"] if current else 0,
+        })
 
     @app.route("/api/admin/meme", methods=["POST"])
     @require_auth
@@ -689,6 +769,15 @@ def _init_db(app):
                 session_id  TEXT,
                 is_correct  INTEGER DEFAULT 0,
                 logged_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS meme_votes (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                meme_id     INTEGER NOT NULL REFERENCES memes(id) ON DELETE CASCADE,
+                session_id  TEXT    NOT NULL,
+                vote        INTEGER NOT NULL CHECK(vote IN (-1, 1)),
+                voted_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(meme_id, session_id)
             );
             """
         )

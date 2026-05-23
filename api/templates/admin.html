@@ -1300,6 +1300,14 @@ function renderMemeGrid() {
         <span class="meme-card__title" title="${esc(m.title)}">${esc(m.title||"–")}</span>
         <button class="btn btn-danger btn-sm" onclick="deleteMeme(${m.id})">✕</button>
       </div>
+      <div style="display:flex;gap:.3rem;padding:.3rem .55rem .45rem;background:#f8fafc;border-top:1px solid var(--border)">
+        <span style="display:inline-flex;align-items:center;gap:.2rem;font-size:.75rem;color:#1e8449;font-weight:600">
+          👍 ${m.upvotes||0}
+        </span>
+        <span style="display:inline-flex;align-items:center;gap:.2rem;font-size:.75rem;color:#c0392b;font-weight:600;margin-left:.25rem">
+          👎 ${m.downvotes||0}
+        </span>
+      </div>
     </div>`).join("");
 }
 

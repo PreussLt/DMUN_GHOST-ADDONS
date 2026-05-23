@@ -52,6 +52,17 @@
     document.getElementById(`${NS}-lightbox`).classList.add("open");
   }
 
+  // ── Session-ID ────────────────────────────────────────────────────────────
+
+  function getSessionId() {
+    let id = localStorage.getItem("dmun_session_id");
+    if (!id) {
+      id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem("dmun_session_id", id);
+    }
+    return id;
+  }
+
   // ── Widget initialisieren ────────────────────────────────────────────────
 
   function initWidget(container) {
@@ -60,6 +71,7 @@
     const columns     = parseInt(container.dataset.columns || "3", 10);
     const title       = container.dataset.title || "";
     const uploadLabel = container.dataset.uploadLabel || "Meme hochladen und teilen";
+    const sessionId   = getSessionId();
 
     container.style.setProperty("--mu-cols", columns);
 
@@ -206,7 +218,7 @@
 
     async function loadGallery() {
       try {
-        const res = await fetch(`${apiUrl}/api/memes`);
+        const res = await fetch(`${apiUrl}/api/memes?session_id=${encodeURIComponent(sessionId)}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         renderGallery(await res.json());
       } catch {
@@ -220,11 +232,25 @@
         return;
       }
       grid.innerHTML = memes.map(m => {
-        const safeTitle = esc(m.title || "");
-        const safeUrl   = esc(m.url);
+        const safeTitle  = esc(m.title || "");
+        const safeUrl    = esc(m.url);
+        const upActive   = m.user_vote ===  1 ? "active" : "";
+        const downActive = m.user_vote === -1 ? "active" : "";
         return `
           <figure class="${NS}__card">
-            <img class="${NS}__card-img" src="${safeUrl}" alt="${safeTitle}" loading="lazy">
+            <div class="${NS}__img-wrap">
+              <img class="${NS}__card-img" src="${safeUrl}" alt="${safeTitle}" loading="lazy">
+              <div class="${NS}__votes">
+                <button class="${NS}__vote-btn ${NS}__vote-btn--up ${upActive}"
+                        data-id="${m.id}" data-vote="1" title="Gefällt mir">
+                  👍 <span>${m.upvotes || 0}</span>
+                </button>
+                <button class="${NS}__vote-btn ${NS}__vote-btn--down ${downActive}"
+                        data-id="${m.id}" data-vote="-1" title="Gefällt mir nicht">
+                  👎 <span>${m.downvotes || 0}</span>
+                </button>
+              </div>
+            </div>
             ${m.title ? `<figcaption class="${NS}__card-caption">${safeTitle}</figcaption>` : ""}
           </figure>`;
       }).join("");
@@ -232,6 +258,41 @@
       grid.querySelectorAll(`.${NS}__card-img`).forEach(img => {
         img.addEventListener("click", () => openLightbox(img.src));
       });
+
+      grid.querySelectorAll(`.${NS}__vote-btn`).forEach(btn => {
+        btn.addEventListener("click", () => handleVote(btn));
+      });
+    }
+
+    async function handleVote(btn) {
+      const memeId   = btn.dataset.id;
+      const vote     = parseInt(btn.dataset.vote, 10);
+      const isActive = btn.classList.contains("active");
+      const send     = isActive ? 0 : vote;
+
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${apiUrl}/api/memes/${memeId}/vote`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sessionId, vote: send }),
+        });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+
+        const card    = btn.closest("figure");
+        const upBtn   = card.querySelector(`.${NS}__vote-btn--up`);
+        const downBtn = card.querySelector(`.${NS}__vote-btn--down`);
+
+        upBtn.classList.toggle("active",   data.user_vote ===  1);
+        downBtn.classList.toggle("active", data.user_vote === -1);
+        upBtn.querySelector("span").textContent   = data.upvotes;
+        downBtn.querySelector("span").textContent = data.downvotes;
+      } catch {
+        // silently ignore
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     loadGallery();
@@ -347,20 +408,38 @@
 
 .dmun-mu__card {
   margin: 0; border-radius: 7px; overflow: hidden;
-  background: #f0f4f8; border: 1px solid #d5dde5;
+  background: #fff; border: 1px solid #d5dde5;
   box-shadow: 0 1px 4px rgba(0,0,0,.06);
   transition: transform .2s, box-shadow .2s;
 }
 .dmun-mu__card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.12); }
-.dmun-mu__card-img {
-  width: 100%; aspect-ratio: 1; object-fit: cover; display: block;
-  cursor: zoom-in; transition: opacity .2s;
+.dmun-mu__img-wrap {
+  position: relative; overflow: hidden; aspect-ratio: 1;
 }
-.dmun-mu__card-img:hover { opacity: .9; }
+.dmun-mu__card-img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  cursor: zoom-in; transition: transform .25s;
+}
+.dmun-mu__card:hover .dmun-mu__card-img { transform: scale(1.04); }
 .dmun-mu__card-caption {
   padding: .35rem .55rem; font-size: .75rem; color: #6b7280;
   text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+.dmun-mu__votes {
+  position: absolute; bottom: .45rem; left: .45rem;
+  display: flex; gap: .3rem; z-index: 1;
+}
+.dmun-mu__vote-btn {
+  display: inline-flex; align-items: center; gap: .22rem;
+  padding: .22rem .55rem; border: none; border-radius: 99px;
+  background: rgba(0,0,0,.52); backdrop-filter: blur(4px);
+  font-size: .78rem; font-weight: 700; cursor: pointer; color: #fff;
+  transition: background .15s, transform .1s; user-select: none; line-height: 1.4;
+}
+.dmun-mu__vote-btn:hover { background: rgba(0,0,0,.72); transform: translateY(-1px); }
+.dmun-mu__vote-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.dmun-mu__vote-btn--up.active   { background: rgba(30,132,73,.85); }
+.dmun-mu__vote-btn--down.active { background: rgba(192,57,43,.85); }
 
 .dmun-mu__loading, .dmun-mu__empty, .dmun-mu__error {
   padding: 2rem; text-align: center; color: #888;
