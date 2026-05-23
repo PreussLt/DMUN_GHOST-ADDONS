@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>DMUN Quiz Admin</title>
+<title>DMUN Admin</title>
 <style>
 /* ── Reset & Base ─────────────────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -55,15 +55,6 @@ textarea{resize:vertical;min-height:80px}
 .toolbar{display:flex;gap:.75rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap}
 .toolbar h2{flex:1;font-size:1.15rem;color:var(--pri)}
 
-/* ── Quiz list ────────────────────────────────────────────────────────────── */
-.quiz-list{display:flex;flex-direction:column;gap:.75rem}
-.quiz-item{display:flex;align-items:center;gap:1rem;padding:1rem 1.25rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
-.quiz-item-info{flex:1}
-.quiz-item-title{font-weight:700;margin-bottom:.15rem}
-.quiz-item-meta{font-size:.8rem;color:var(--muted)}
-.quiz-item-actions{display:flex;gap:.5rem;flex-shrink:0}
-.badge{display:inline-block;padding:.15em .55em;border-radius:99px;font-size:.75rem;font-weight:700;background:var(--acc);color:#fff}
-
 /* ── Editor ───────────────────────────────────────────────────────────────── */
 .editor-section{margin-bottom:2rem}
 .editor-section h3{font-size:1rem;font-weight:700;color:var(--pri);border-bottom:2px solid var(--border);padding-bottom:.4rem;margin-bottom:1rem}
@@ -77,7 +68,7 @@ textarea{resize:vertical;min-height:80px}
 .answer-expl{margin-top:.4rem;padding-left:1.2rem;width:100%}
 .answer-expl input{font-size:.85rem}
 
-/* ── Results ──────────────────────────────────────────────────────────────── */
+/* ── Tables ───────────────────────────────────────────────────────────────── */
 table{width:100%;border-collapse:collapse;font-size:.875rem}
 th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--border)}
 th{font-weight:600;background:var(--bg);color:var(--muted)}
@@ -86,7 +77,7 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 .embed-box{background:#1e1e2e;color:#a6e3a1;padding:1rem;border-radius:var(--radius);font-family:monospace;font-size:.8rem;overflow-x:auto;white-space:pre}
 
 /* ── Tabs ─────────────────────────────────────────────────────────────────── */
-.tabs{display:flex;gap:.25rem;border-bottom:2px solid var(--border);margin-bottom:1.5rem}
+.tabs{display:flex;gap:.25rem;border-bottom:2px solid var(--border);margin-bottom:1.5rem;flex-wrap:wrap}
 .tab-btn{background:none;border:none;padding:.6rem 1.1rem;font-size:.9rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s}
 .tab-btn.active{color:var(--acc);border-bottom-color:var(--acc)}
 .tab-btn:hover{color:var(--acc)}
@@ -97,20 +88,22 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 #toast.show{opacity:1}
 #toast.ok{background:var(--ok)}#toast.err{background:var(--err)}
 
-/* ── Poll ─────────────────────────────────────────────────────────────────── */
+/* ── Poll / Quiz shared status ────────────────────────────────────────────── */
 .poll-status{display:inline-block;padding:.15em .6em;border-radius:99px;font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .poll-status--open{background:#d5f5e3;color:#1e8449}
 .poll-status--closed{background:#f5d5d5;color:#922b21}
+
+/* ── Shared bar chart rows ────────────────────────────────────────────────── */
 .poll-bar-row{margin-bottom:.85rem}
 .poll-bar-label{display:flex;justify-content:space-between;font-size:.875rem;margin-bottom:.3rem;gap:.5rem}
 .poll-bar-label span:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .poll-bar-track{height:22px;background:var(--bg);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
 .poll-bar-fill{height:100%;background:var(--acc);border-radius:4px;transition:width .5s ease;display:flex;align-items:center;padding-left:.4rem;color:#fff;font-size:.75rem;font-weight:700;min-width:0}
+.poll-total{font-size:.85rem;color:var(--muted);margin-bottom:1.25rem}
+
+/* ── Poll cards ───────────────────────────────────────────────────────────── */
 .poll-option-input{display:flex;align-items:center;gap:.5rem;background:#fff;border:1px solid var(--border);border-radius:calc(var(--radius) - 2px);padding:.5rem .75rem;margin-bottom:.4rem}
 .poll-option-input input[type=text]{flex:1;border:none;outline:none;font-size:.95rem}
-.poll-total{font-size:.85rem;color:var(--muted);margin-bottom:1.25rem}
-.poll-embed-box{background:#1e1e2e;color:#a6e3a1;padding:1rem;border-radius:var(--radius);font-family:monospace;font-size:.8rem;overflow-x:auto;white-space:pre;margin-top:.75rem}
-/* Poll card (Übersicht mit Inline-Ergebnissen) */
 .poll-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:.85rem}
 .poll-card__header{display:flex;align-items:flex-start;gap:1rem;padding:.9rem 1.1rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .poll-card__info{flex:1;min-width:0}
@@ -120,7 +113,61 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 .poll-card__votes{font-size:.85rem;font-weight:700;color:var(--pri);padding:.2rem .6rem;background:var(--bg);border-radius:99px;border:1px solid var(--border)}
 .poll-card__results{padding:.85rem 1.1rem}
 .poll-card__no-votes{font-size:.85rem;color:var(--muted);font-style:italic}
-/* ── Meme Embed ───────────────────────────────────────────────────────────── */
+.poll-embed-box{background:#1e1e2e;color:#a6e3a1;padding:1rem;border-radius:var(--radius);font-family:monospace;font-size:.8rem;overflow-x:auto;white-space:pre;margin-top:.75rem}
+.badge{display:inline-block;padding:.15em .55em;border-radius:99px;font-size:.75rem;font-weight:700;background:var(--acc);color:#fff}
+
+/* ── Quiz Cards (like poll cards) ─────────────────────────────────────────── */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.05);margin-bottom:.85rem}
+.quiz-card__header{display:flex;align-items:flex-start;gap:1rem;padding:.9rem 1.1rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.quiz-card__info{flex:1;min-width:0}
+.quiz-card__title{font-weight:700;font-size:1rem;margin-bottom:.3rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+.quiz-card__meta{font-size:.8rem;color:var(--muted)}
+.quiz-card__actions{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center;flex-shrink:0}
+.quiz-card__stat{font-size:.85rem;font-weight:700;color:var(--pri);padding:.2rem .6rem;background:var(--bg);border-radius:99px;border:1px solid var(--border)}
+.quiz-card__body{padding:.85rem 1.1rem}
+.quiz-card__nobody{font-size:.85rem;color:var(--muted);font-style:italic}
+
+/* ── Analytics (Ergebnisse Grafik) ───────────────────────────────────────── */
+.analytics-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:.75rem;margin-bottom:1.5rem}
+.analytics-stat-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem 1rem;text-align:center}
+.analytics-stat-box__value{font-size:1.5rem;font-weight:800;color:var(--pri);line-height:1.1}
+.analytics-stat-box__label{font-size:.72rem;color:var(--muted);margin-top:.25rem}
+.section-heading{font-size:.95rem;font-weight:700;color:var(--pri);border-bottom:2px solid var(--border);padding-bottom:.35rem;margin-bottom:1rem}
+
+/* Histogram */
+.histogram-wrap{margin-bottom:1.5rem}
+.histogram{display:flex;align-items:flex-end;gap:5px;height:130px;border-bottom:2px solid var(--border);margin-bottom:.4rem;padding:0 4px}
+.hist-bar{flex:1;border-radius:3px 3px 0 0;min-height:3px;transition:height .5s ease;position:relative;cursor:default}
+.hist-bar--zero{background:var(--border)}
+.hist-bar--active{background:var(--acc)}
+.hist-bar--active:hover{background:var(--pri)}
+.hist-bar__tip{display:none;position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:#1e1e2e;color:#fff;padding:.15rem .4rem;border-radius:4px;font-size:.7rem;white-space:nowrap;z-index:10;pointer-events:none}
+.hist-bar:hover .hist-bar__tip{display:block}
+.hist-labels{display:flex;gap:5px;padding:0 4px}
+.hist-label{flex:1;text-align:center;font-size:.68rem;color:var(--muted);line-height:1.2}
+
+/* Per-question bars */
+.q-stat-row{margin-bottom:.85rem}
+.q-stat-label{font-size:.85rem;margin-bottom:.3rem;display:flex;justify-content:space-between;gap:.5rem}
+.q-stat-label span:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.q-stat-bar{height:22px;border-radius:4px;overflow:hidden;display:flex;border:1px solid var(--border)}
+.q-stat-correct{background:var(--ok);height:100%;display:flex;align-items:center;padding:0 .45rem;color:#fff;font-size:.73rem;font-weight:700;transition:width .5s;white-space:nowrap;overflow:hidden}
+.q-stat-wrong{background:var(--err);height:100%;display:flex;align-items:center;justify-content:flex-end;padding:0 .45rem;color:#fff;font-size:.73rem;font-weight:700;flex:1;white-space:nowrap;overflow:hidden}
+.analytics-note{font-size:.8rem;color:var(--muted);font-style:italic;padding:.5rem 0}
+
+/* Table toggle */
+.table-toggle{background:none;border:none;cursor:pointer;font-size:.85rem;color:var(--acc);font-weight:600;padding:.3rem 0;display:flex;align-items:center;gap:.3rem;margin-bottom:.75rem}
+.table-toggle:hover{color:var(--pri)}
+.table-wrap{display:none}.table-wrap.open{display:block}
+
+/* ── Embed type selector ──────────────────────────────────────────────────── */
+.embed-type-bar{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.embed-type-btn{padding:.5rem 1.3rem;border:2px solid var(--border);border-radius:var(--radius);background:var(--card);font-size:.9rem;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
+.embed-type-btn.active{border-color:var(--acc);color:var(--acc);background:#eef3f8}
+.embed-type-btn:hover:not(.active){border-color:var(--acc);color:var(--acc)}
+.embed-section{display:none}.embed-section.active{display:block}
+
+/* ── Meme Embed (in embed tab + meme tab) ────────────────────────────────── */
 .meme-embed-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:1.5rem;overflow:hidden}
 .meme-embed-section__header{display:flex;align-items:center;gap:.75rem;padding:.85rem 1.1rem;cursor:pointer;user-select:none;border-bottom:1px solid transparent;transition:background .15s}
 .meme-embed-section__header:hover{background:var(--bg)}
@@ -135,6 +182,7 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 .meme-embed-card__title{font-weight:700;font-size:.85rem;color:var(--pri);margin-bottom:.3rem}
 .meme-embed-card__desc{font-size:.78rem;color:var(--muted);margin-bottom:.6rem}
 .embed-code-box{background:#1e1e2e;color:#a6e3a1;padding:.85rem 1rem;border-radius:var(--radius);font-family:monospace;font-size:.75rem;overflow-x:auto;white-space:pre;margin-bottom:.5rem}
+
 /* ── Meme Moderation ──────────────────────────────────────────────────────── */
 .pending-section{background:#fff8f0;border:1px solid #f0c070;border-radius:var(--radius);padding:1.1rem 1.25rem;margin-bottom:1.5rem}
 .pending-section__header{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem}
@@ -149,6 +197,7 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 .meme-status-dot{display:inline-block;width:.55em;height:.55em;border-radius:50%;margin-right:.25em}
 .meme-status-dot--approved{background:var(--ok)}
 .meme-status-dot--pending{background:#e67e22}
+
 /* ── Meme Gallery ─────────────────────────────────────────────────────────── */
 .upload-area{border:2px dashed var(--border);border-radius:var(--radius);padding:2.5rem;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:var(--bg)}
 .upload-area:hover,.upload-area.drag-over{border-color:var(--acc);background:#eef3f8}
@@ -164,6 +213,7 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 #lightbox.open{display:flex}
 #lightbox img{max-width:90vw;max-height:90vh;border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,.5)}
 #lightbox-close{position:absolute;top:1rem;right:1.25rem;color:#fff;font-size:2rem;cursor:pointer;line-height:1;background:none;border:none}
+
 /* ── Misc ─────────────────────────────────────────────────────────────────── */
 .empty{text-align:center;color:var(--muted);padding:3rem}
 .mt-1{margin-top:.5rem}.mt-2{margin-top:1rem}.gap-1{gap:.5rem}
@@ -175,7 +225,7 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 
 <header>
   <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Flag_of_the_United_Nations.svg/40px-Flag_of_the_United_Nations.svg.png" height="28" alt="">
-  <h1>DMUN Quiz Admin</h1>
+  <h1>DMUN Admin</h1>
   <span id="logged-in-user"></span>
   <button class="btn btn-ghost btn-sm" id="logout-btn" style="margin-left:auto;color:#fff;border-color:rgba(255,255,255,.3)">Abmelden</button>
 </header>
@@ -208,18 +258,16 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
     <button class="tab-btn" data-tab="memes">Meme-Galerie</button>
   </div>
 
-  <!-- TAB: QUIZ LIST -->
+  <!-- ═══ TAB: QUIZ LIST ═══════════════════════════════════════════════════ -->
   <div class="tab-pane active" id="tab-quizzes">
     <div class="toolbar">
       <h2>Alle Quizze</h2>
       <button class="btn btn-primary" id="btn-new-quiz">+ Neues Quiz</button>
     </div>
-    <div id="quiz-list" class="quiz-list">
-      <p class="empty">Lade…</p>
-    </div>
+    <div id="quiz-list"></div>
   </div>
 
-  <!-- TAB: EDITOR -->
+  <!-- ═══ TAB: EDITOR ══════════════════════════════════════════════════════ -->
   <div class="tab-pane" id="tab-editor">
     <div class="toolbar">
       <h2 id="editor-title">Neues Quiz</h2>
@@ -243,7 +291,6 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
           <p class="hint">Optionaler Verweis auf den Ghost-Artikel, in dem dieses Quiz eingebettet ist.</p>
         </div>
       </div>
-
       <div class="editor-section">
         <h3>Fragen</h3>
         <div id="questions-container"></div>
@@ -252,7 +299,7 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
     </div>
   </div>
 
-  <!-- TAB: RESULTS -->
+  <!-- ═══ TAB: RESULTS ═════════════════════════════════════════════════════ -->
   <div class="tab-pane" id="tab-results">
     <div class="toolbar">
       <h2>Ergebnisse</h2>
@@ -260,26 +307,90 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
         <option value="">– Quiz wählen –</option>
       </select>
     </div>
-    <div id="results-table-wrap" class="card">
+    <div id="results-content">
       <p class="empty">Bitte ein Quiz wählen</p>
     </div>
   </div>
 
-  <!-- TAB: EMBED -->
+  <!-- ═══ TAB: EMBED ════════════════════════════════════════════════════════ -->
   <div class="tab-pane" id="tab-embed">
     <div class="toolbar">
-      <h2>Embed-Code</h2>
-      <select id="embed-quiz-select" style="padding:.4rem .75rem;border:1px solid var(--border);border-radius:var(--radius)">
-        <option value="">– Quiz wählen –</option>
-      </select>
+      <h2>Einbetten</h2>
     </div>
-    <div class="card" id="embed-card">
-      <p class="empty">Bitte ein Quiz wählen</p>
+
+    <div class="embed-type-bar">
+      <button class="embed-type-btn active" data-type="quiz" onclick="selectEmbedType('quiz')">Quiz</button>
+      <button class="embed-type-btn" data-type="poll" onclick="selectEmbedType('poll')">Umfrage</button>
+      <button class="embed-type-btn" data-type="meme" onclick="selectEmbedType('meme')">Meme-Galerie</button>
+    </div>
+
+    <!-- Quiz Embed -->
+    <div class="embed-section active" id="embed-sec-quiz">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
+          <label class="label" style="margin:0;white-space:nowrap">Quiz wählen:</label>
+          <select id="embed-quiz-select" style="padding:.4rem .75rem;border:1px solid var(--border);border-radius:var(--radius);flex:1;min-width:200px">
+            <option value="">– Quiz wählen –</option>
+          </select>
+        </div>
+        <div id="embed-quiz-card">
+          <p class="empty" style="padding:1.5rem">Bitte ein Quiz wählen</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Poll Embed -->
+    <div class="embed-section" id="embed-sec-poll">
+      <div class="card">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
+          <label class="label" style="margin:0;white-space:nowrap">Umfrage wählen:</label>
+          <select id="embed-poll-select" style="padding:.4rem .75rem;border:1px solid var(--border);border-radius:var(--radius);flex:1;min-width:200px">
+            <option value="">– Umfrage wählen –</option>
+          </select>
+        </div>
+        <div id="embed-poll-card">
+          <p class="empty" style="padding:1.5rem">Bitte eine Umfrage wählen</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meme Embed -->
+    <div class="embed-section" id="embed-sec-meme">
+      <div class="card">
+        <div style="margin-bottom:1rem">
+          <label class="label" style="display:inline;font-size:.875rem">Spalten:&nbsp;</label>
+          <select id="embed-meme-cols" onchange="renderEmbedMemeCodes()"
+            style="padding:.3rem .6rem;border:1px solid var(--border);border-radius:5px">
+            <option value="2">2</option><option value="3" selected>3</option><option value="4">4</option>
+          </select>
+          &nbsp;&nbsp;
+          <label class="label" style="display:inline;font-size:.875rem">Titel:&nbsp;</label>
+          <input id="embed-meme-title" type="text" placeholder="Meme-Galerie" oninput="renderEmbedMemeCodes()"
+            style="width:180px;padding:.3rem .6rem;border:1px solid var(--border);border-radius:5px">
+          &nbsp;&nbsp;
+          <label class="label" style="display:inline;font-size:.875rem">Upload-Token:&nbsp;</label>
+          <input id="embed-meme-token" type="text" placeholder="leer = kein Token" oninput="renderEmbedMemeCodes()"
+            style="width:160px;padding:.3rem .6rem;border:1px solid var(--border);border-radius:5px">
+        </div>
+
+        <div class="meme-embed-card">
+          <div class="meme-embed-card__title">Nur-Lese-Galerie</div>
+          <div class="meme-embed-card__desc">Zeigt alle freigegebenen Memes – kein Upload für Besucher.</div>
+          <div class="embed-code-box" id="embed-meme-gallery-code"></div>
+          <button class="btn btn-ghost btn-sm" onclick="copyEmbed('embed-meme-gallery-code')">📋 Kopieren</button>
+        </div>
+
+        <div class="meme-embed-card" style="margin-top:.75rem">
+          <div class="meme-embed-card__title">Upload + Galerie</div>
+          <div class="meme-embed-card__desc">Besucher können Memes hochladen (Status: ausstehend bis zur Freigabe).</div>
+          <div class="embed-code-box" id="embed-meme-upload-code"></div>
+          <button class="btn btn-ghost btn-sm" onclick="copyEmbed('embed-meme-upload-code')">📋 Kopieren</button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-  <!-- TAB: UMFRAGEN -->
+  <!-- ═══ TAB: UMFRAGEN ════════════════════════════════════════════════════ -->
   <div class="tab-pane" id="tab-polls">
 
     <!-- LIST VIEW -->
@@ -326,7 +437,7 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
           <div class="form-group" style="margin-top:1rem">
             <label class="label" for="poll-thankyou">Nachricht nach der Abstimmung</label>
             <textarea id="poll-thankyou" rows="2"
-              placeholder="z.B. Danke für deine Teilnahme! Die Ergebnisse werden beim nächsten Committee vorgestellt."></textarea>
+              placeholder="z.B. Danke für deine Teilnahme!"></textarea>
             <p class="hint">Wird direkt nach dem Abstimmen angezeigt. Leer lassen für Standardtext.</p>
           </div>
         </div>
@@ -338,40 +449,37 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
       </div>
     </div>
 
-    <!-- RESULTS VIEW -->
+    <!-- RESULTS VIEW (Embed) -->
     <div id="polls-results-view" style="display:none">
       <div class="toolbar">
-        <h2 id="poll-results-heading">Ergebnisse</h2>
+        <h2 id="poll-results-heading">Einbetten</h2>
         <button class="btn btn-ghost btn-sm" id="btn-back-polls">← Zurück</button>
       </div>
       <div class="card" id="poll-results-card"></div>
     </div>
-
   </div>
 
-  <!-- TAB: MEMES -->
+  <!-- ═══ TAB: MEMES ═══════════════════════════════════════════════════════ -->
   <div class="tab-pane" id="tab-memes">
     <div class="toolbar">
       <h2>Meme-Galerie</h2>
       <span id="meme-count" style="color:var(--muted);font-size:.875rem"></span>
     </div>
 
-    <!-- Einbetten -->
+    <!-- Einbetten Accordion -->
     <div class="meme-embed-section">
       <div class="meme-embed-section__header" id="meme-embed-toggle" onclick="toggleMemeEmbed()">
         <span class="meme-embed-section__title">📋 Einbetten in Ghost</span>
         <span class="meme-embed-section__arrow">▼</span>
       </div>
       <div class="meme-embed-section__body" id="meme-embed-body">
-
         <div class="meme-embed-card">
           <div class="meme-embed-card__title">Nur-Lese-Galerie</div>
           <div class="meme-embed-card__desc">Zeigt alle freigegebenen Memes – kein Upload für Besucher.</div>
           <div class="embed-code-box" id="embed-gallery-code"></div>
           <button class="btn btn-ghost btn-sm" onclick="copyEmbed('embed-gallery-code')">📋 Kopieren</button>
         </div>
-
-        <div class="meme-embed-card">
+        <div class="meme-embed-card" style="margin-top:.75rem">
           <div class="meme-embed-card__title">Upload + Galerie</div>
           <div class="meme-embed-card__desc">Besucher können Memes hochladen (Status: ausstehend bis zur Freigabe).</div>
           <div class="embed-code-box" id="embed-upload-code"></div>
@@ -380,9 +488,7 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
             <label class="label" style="display:inline;font-size:.8rem">Spalten:&nbsp;</label>
             <select id="embed-cols" onchange="renderMemeEmbedCodes()"
               style="padding:.2rem .5rem;border:1px solid var(--border);border-radius:5px;font-size:.8rem">
-              <option value="2">2</option>
-              <option value="3" selected>3</option>
-              <option value="4">4</option>
+              <option value="2">2</option><option value="3" selected>3</option><option value="4">4</option>
             </select>
             &nbsp;&nbsp;
             <label class="label" style="display:inline;font-size:.8rem">Titel:&nbsp;</label>
@@ -394,7 +500,6 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
               style="width:160px;padding:.2rem .5rem;border:1px solid var(--border);border-radius:5px;font-size:.8rem">
           </div>
         </div>
-
       </div>
     </div>
 
@@ -426,7 +531,8 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
       <p class="empty" style="grid-column:1/-1">Lade…</p>
     </div>
   </div>
-</div>
+
+</div><!-- /#app -->
 
 <!-- Lightbox -->
 <div id="lightbox">
@@ -439,9 +545,12 @@ th{font-weight:600;background:var(--bg);color:var(--muted)}
 <script>
 /* ── State ──────────────────────────────────────────────────────────────── */
 const API = "{{ public_api_url }}";
-let auth = null;   // btoa("user:pass")
+let auth = null;
 let editingId = null;
 let allQuizzes = [];
+let polls = [];
+let editingPollId = null;
+let memes = [];
 
 /* ── Auth ───────────────────────────────────────────────────────────────── */
 function headers() {
@@ -470,7 +579,9 @@ document.getElementById("login-btn").addEventListener("click", async () => {
   }
 });
 
-document.getElementById("inp-pass").addEventListener("keydown", e => { if(e.key==="Enter") document.getElementById("login-btn").click(); });
+document.getElementById("inp-pass").addEventListener("keydown", e => {
+  if(e.key==="Enter") document.getElementById("login-btn").click();
+});
 
 document.getElementById("logout-btn").addEventListener("click", () => {
   auth=null; sessionStorage.removeItem("dmun_admin_auth");
@@ -478,7 +589,6 @@ document.getElementById("logout-btn").addEventListener("click", () => {
   document.getElementById("app").style.display="none";
 });
 
-// Auto-login from sessionStorage
 const saved = sessionStorage.getItem("dmun_admin_auth");
 if (saved) {
   const [u,p] = atob(saved).split(":");
@@ -494,11 +604,7 @@ if (saved) {
 
 /* ── Tabs ───────────────────────────────────────────────────────────────── */
 document.querySelectorAll(".tab-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".tab-btn,.tab-pane").forEach(el => el.classList.remove("active"));
-    btn.classList.add("active");
-    document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
-  });
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
 });
 
 function switchTab(name) {
@@ -516,7 +622,12 @@ function toast(msg, type="ok") {
   toastTimer = setTimeout(() => t.className="", 2800);
 }
 
-/* ── Load data ──────────────────────────────────────────────────────────── */
+/* ── Utils ───────────────────────────────────────────────────────────────── */
+function esc(str) {
+  const d=document.createElement("div"); d.textContent=String(str||""); return d.innerHTML;
+}
+
+/* ── Load all ────────────────────────────────────────────────────────────── */
 async function loadAll() {
   const [qRes, pRes] = await Promise.all([
     fetch(API+"/api/admin/quizzes", {headers:headers()}),
@@ -529,37 +640,95 @@ async function loadAll() {
   renderPollList();
 }
 
+/* ── Quiz List (card layout like polls) ──────────────────────────────────── */
 function renderQuizList() {
   const el = document.getElementById("quiz-list");
-  if (!allQuizzes.length) { el.innerHTML='<p class="empty">Noch keine Quizze vorhanden</p>'; return; }
-  el.innerHTML = allQuizzes.map(q => `
-    <div class="quiz-item">
-      <div class="quiz-item-info">
-        <div class="quiz-item-title">${esc(q.title)}</div>
-        <div class="quiz-item-meta">
-          ID: ${q.id} &bull;
-          <span class="badge">${q.question_count} Fragen</span>
-          ${q.ghost_slug ? ` &bull; Slug: <code>${esc(q.ghost_slug)}</code>` : ""}
-          &bull; ${new Date(q.created_at).toLocaleDateString("de-DE")}
+  if (!allQuizzes.length) {
+    el.innerHTML='<p class="empty">Noch keine Quizze vorhanden</p>';
+    return;
+  }
+
+  el.innerHTML = allQuizzes.map(q => {
+    const count = q.result_count || 0;
+    const avg   = q.avg_pct != null ? Math.round(q.avg_pct) : null;
+    const w     = avg != null ? Math.max(avg, avg > 0 ? 3 : 0) : 0;
+
+    const body = count > 0 && avg != null ? `
+      <div class="quiz-card__body">
+        <div class="poll-bar-row" style="margin-bottom:0">
+          <div class="poll-bar-label">
+            <span>Ø Score</span>
+            <span style="flex-shrink:0;font-size:.8rem;color:var(--muted)">${avg}% (${count} Teilnahme${count!==1?'n':''})</span>
+          </div>
+          <div class="poll-bar-track">
+            <div class="poll-bar-fill" style="width:${w}%"></div>
+          </div>
         </div>
-      </div>
-      <div class="quiz-item-actions">
-        <button class="btn btn-ghost btn-sm" onclick="openEditor(${q.id})">Bearbeiten</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteQuiz(${q.id},'${esc(q.title)}')">Löschen</button>
-      </div>
-    </div>`).join("");
+      </div>` : `
+      <div class="quiz-card__body">
+        <span class="quiz-card__nobody">Noch keine Teilnahmen</span>
+      </div>`;
+
+    return `
+      <div class="quiz-card">
+        <div class="quiz-card__header">
+          <div class="quiz-card__info">
+            <div class="quiz-card__title">
+              ${esc(q.title)}
+              <span class="badge">${q.question_count} Fragen</span>
+            </div>
+            <div class="quiz-card__meta">
+              ID: ${q.id}
+              ${q.ghost_slug ? ` &bull; Slug: <code>${esc(q.ghost_slug)}</code>` : ""}
+              &bull; ${new Date(q.created_at).toLocaleDateString("de-DE")}
+            </div>
+          </div>
+          <div class="quiz-card__actions">
+            <span class="quiz-card__stat">${count} Teilnahme${count!==1?'n':''}</span>
+            <button class="btn btn-ghost btn-sm" onclick="openQuizResults(${q.id},'${esc(q.title)}')">Ergebnisse</button>
+            <button class="btn btn-ghost btn-sm" onclick="openQuizEmbed(${q.id})">Einbetten</button>
+            <button class="btn btn-ghost btn-sm" onclick="openEditor(${q.id})">Bearbeiten</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteQuiz(${q.id},'${esc(q.title)}')">Löschen</button>
+          </div>
+        </div>
+        ${body}
+      </div>`;
+  }).join("");
+}
+
+function openQuizResults(id, title) {
+  const sel = document.getElementById("results-quiz-select");
+  sel.value = id;
+  switchTab("results");
+  loadResults();
+}
+
+function openQuizEmbed(id) {
+  const sel = document.getElementById("embed-quiz-select");
+  sel.value = id;
+  switchTab("embed");
+  selectEmbedType("quiz");
+  renderQuizEmbed();
 }
 
 function populateSelects() {
   ["results-quiz-select","embed-quiz-select"].forEach(id => {
     const sel = document.getElementById(id);
+    if (!sel) return;
     const current = sel.value;
     sel.innerHTML = '<option value="">– Quiz wählen –</option>' +
       allQuizzes.map(q => `<option value="${q.id}" ${q.id==current?'selected':''}>${esc(q.title)}</option>`).join("");
   });
+
+  const pollSel = document.getElementById("embed-poll-select");
+  if (pollSel) {
+    const current = pollSel.value;
+    pollSel.innerHTML = '<option value="">– Umfrage wählen –</option>' +
+      polls.map(p => `<option value="${p.id}" ${p.id==current?'selected':''}>${esc(p.title)}</option>`).join("");
+  }
 }
 
-/* ── Editor ─────────────────────────────────────────────────────────────── */
+/* ── Editor ──────────────────────────────────────────────────────────────── */
 document.getElementById("btn-new-quiz").addEventListener("click", () => {
   editingId=null;
   document.getElementById("editor-title").textContent="Neues Quiz";
@@ -571,7 +740,6 @@ document.getElementById("btn-new-quiz").addEventListener("click", () => {
 });
 
 document.getElementById("btn-cancel-editor").addEventListener("click", () => switchTab("quizzes"));
-
 document.getElementById("btn-add-question").addEventListener("click", () => addQuestion());
 
 async function openEditor(id) {
@@ -677,63 +845,229 @@ async function deleteQuiz(id, title) {
   await loadAll();
 }
 
-/* ── Results ─────────────────────────────────────────────────────────────── */
+/* ── Results + Analytics ─────────────────────────────────────────────────── */
 document.getElementById("results-quiz-select").addEventListener("change", loadResults);
 
 async function loadResults() {
   const id = document.getElementById("results-quiz-select").value;
-  const wrap = document.getElementById("results-table-wrap");
+  const wrap = document.getElementById("results-content");
   if (!id) { wrap.innerHTML='<p class="empty">Bitte ein Quiz wählen</p>'; return; }
-  const res = await fetch(API+"/api/admin/quiz/"+id+"/results", {headers:headers()});
-  const rows = await res.json();
-  if (!rows.length) { wrap.innerHTML='<p class="empty">Noch keine Ergebnisse</p>'; return; }
-  const avg = (rows.reduce((s,r)=>s+r.score,0)/rows.length).toFixed(1);
+
+  wrap.innerHTML = '<p class="empty">Lade…</p>';
+
+  const [rawRes, analyticsRes] = await Promise.all([
+    fetch(API+"/api/admin/quiz/"+id+"/results",   {headers:headers()}),
+    fetch(API+"/api/admin/quiz/"+id+"/analytics", {headers:headers()}),
+  ]);
+  const rows      = await rawRes.json();
+  const analytics = await analyticsRes.json();
+
+  if (!rows.length) {
+    wrap.innerHTML='<div class="card"><p class="empty">Noch keine Ergebnisse</p></div>';
+    return;
+  }
+
   wrap.innerHTML = `
-    <p style="margin-bottom:1rem;color:var(--muted);font-size:.875rem">
-      ${rows.length} Teilnahmen &bull; Ø Punkte: ${avg}
-    </p>
-    <table>
-      <thead><tr><th>#</th><th>Datum</th><th>Score</th><th>%</th><th>Session</th></tr></thead>
-      <tbody>${rows.map((r,i) => `
-        <tr>
-          <td>${i+1}</td>
-          <td>${new Date(r.completed_at).toLocaleString("de-DE")}</td>
-          <td>${r.score} / ${r.max_score}</td>
-          <td>${r.max_score?Math.round(r.score/r.max_score*100):0}%</td>
-          <td style="font-family:monospace;font-size:.75rem">${r.session_id||"-"}</td>
-        </tr>`).join("")}
-      </tbody>
-    </table>`;
+    <div class="card">
+      ${renderAnalyticsStats(analytics)}
+      ${renderHistogram(analytics)}
+      ${renderQuestionStats(analytics)}
+      <div style="margin-top:1.5rem">
+        <button class="table-toggle" onclick="toggleTable(this)">▶ Einzelergebnisse anzeigen (${rows.length})</button>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Datum</th><th>Score</th><th>%</th><th>Session</th></tr></thead>
+            <tbody>${rows.map((r,i) => `
+              <tr>
+                <td>${i+1}</td>
+                <td>${new Date(r.completed_at).toLocaleString("de-DE")}</td>
+                <td>${r.score} / ${r.max_score}</td>
+                <td>${r.max_score?Math.round(r.score/r.max_score*100):0}%</td>
+                <td style="font-family:monospace;font-size:.75rem">${r.session_id||"-"}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
 }
 
-/* ── Embed ───────────────────────────────────────────────────────────────── */
-document.getElementById("embed-quiz-select").addEventListener("change", () => {
-  const id = document.getElementById("embed-quiz-select").value;
-  const card = document.getElementById("embed-card");
-  if (!id) { card.innerHTML='<p class="empty">Bitte ein Quiz wählen</p>'; return; }
+function toggleTable(btn) {
+  const wrap = btn.nextElementSibling;
+  wrap.classList.toggle("open");
+  btn.textContent = wrap.classList.contains("open")
+    ? btn.textContent.replace("▶","▼").replace("anzeigen","ausblenden")
+    : btn.textContent.replace("▼","▶").replace("ausblenden","anzeigen");
+}
+
+function renderAnalyticsStats(a) {
+  if (!a.sessions) return '';
+  const minPct = a.max_score_possible ? Math.round(a.min_score/a.max_score_possible*100) : 0;
+  const maxPct = a.max_score_possible ? Math.round(a.max_score_val/a.max_score_possible*100) : 0;
+  return `
+    <div class="analytics-stats">
+      <div class="analytics-stat-box">
+        <div class="analytics-stat-box__value">${a.sessions}</div>
+        <div class="analytics-stat-box__label">Teilnahmen</div>
+      </div>
+      <div class="analytics-stat-box">
+        <div class="analytics-stat-box__value">${a.avg_pct}%</div>
+        <div class="analytics-stat-box__label">Ø Score</div>
+      </div>
+      <div class="analytics-stat-box">
+        <div class="analytics-stat-box__value">${minPct}%</div>
+        <div class="analytics-stat-box__label">Minimum</div>
+      </div>
+      <div class="analytics-stat-box">
+        <div class="analytics-stat-box__value">${maxPct}%</div>
+        <div class="analytics-stat-box__label">Maximum</div>
+      </div>
+      <div class="analytics-stat-box">
+        <div class="analytics-stat-box__value">${a.max_score_possible}</div>
+        <div class="analytics-stat-box__label">Max. Punkte</div>
+      </div>
+    </div>`;
+}
+
+function renderHistogram(a) {
+  if (!a.sessions || !a.score_distribution.length) return '';
+
+  const maxPoss = a.max_score_possible;
+  const dist = {};
+  for (let i = 0; i <= maxPoss; i++) dist[i] = 0;
+  a.score_distribution.forEach(d => dist[d.score] = d.count);
+
+  const maxCount = Math.max(...Object.values(dist), 1);
+
+  const bars = Object.entries(dist).map(([score, count]) => {
+    const hPct = count > 0 ? Math.max(Math.round(count/maxCount*100), 6) : 0;
+    const label = count > 0 ? `${count}×` : "0×";
+    const cls = count > 0 ? "hist-bar hist-bar--active" : "hist-bar hist-bar--zero";
+    return `<div class="${cls}" style="height:${hPct}%" title="${score}/${maxPoss}: ${label}">
+      <span class="hist-bar__tip">${label}</span>
+    </div>`;
+  }).join("");
+
+  const labels = Object.keys(dist).map(s =>
+    `<div class="hist-label">${s}/${maxPoss}</div>`
+  ).join("");
+
+  return `
+    <div class="histogram-wrap">
+      <div class="section-heading">Score-Verteilung</div>
+      <div class="histogram">${bars}</div>
+      <div class="hist-labels">${labels}</div>
+    </div>`;
+}
+
+function renderQuestionStats(a) {
+  if (!a.question_stats || !a.question_stats.length) {
+    return `<div class="section-heading">Pro Frage</div>
+      <p class="analytics-note">Fragen-Statistik wird ab der nächsten Teilnahme erfasst.</p>`;
+  }
+
+  const rows = a.question_stats.map((q, i) => {
+    const correctPct = q.total > 0 ? Math.round(q.correct/q.total*100) : 0;
+    const wrongPct   = 100 - correctPct;
+    return `
+      <div class="q-stat-row">
+        <div class="q-stat-label">
+          <span title="${esc(q.question_text)}">Frage ${i+1}: ${esc(q.question_text.length>70?q.question_text.slice(0,70)+"…":q.question_text)}</span>
+          <span style="flex-shrink:0;color:var(--muted);font-size:.8rem">${q.total} Antworten</span>
+        </div>
+        <div class="q-stat-bar">
+          <div class="q-stat-correct" style="width:${correctPct}%">${correctPct>12?correctPct+'% ✓':''}</div>
+          <div class="q-stat-wrong"   style="width:${wrongPct}%">${wrongPct>12?wrongPct+'% ✗':''}</div>
+        </div>
+      </div>`;
+  }).join("");
+
+  return `<div class="section-heading">Pro Frage</div>${rows}`;
+}
+
+/* ── Embed Tab ───────────────────────────────────────────────────────────── */
+let currentEmbedType = "quiz";
+
+function selectEmbedType(type) {
+  currentEmbedType = type;
+  document.querySelectorAll(".embed-type-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.type === type)
+  );
+  document.querySelectorAll(".embed-section").forEach(s =>
+    s.classList.toggle("active", s.id === "embed-sec-"+type)
+  );
+  if (type === "meme") renderEmbedMemeCodes();
+}
+
+document.getElementById("embed-quiz-select").addEventListener("change", renderQuizEmbed);
+document.getElementById("embed-poll-select").addEventListener("change", renderPollEmbed);
+
+function renderQuizEmbed() {
+  const id   = document.getElementById("embed-quiz-select").value;
+  const card = document.getElementById("embed-quiz-card");
+  if (!id) { card.innerHTML='<p class="empty" style="padding:1.5rem">Bitte ein Quiz wählen</p>'; return; }
   const code = `<!-- CSS einmalig pro Seite (oder in Ghost > Code Injection > Site Header) -->
 <link rel="stylesheet" href="${API}/static/quiz-widget.css">
 
-<!-- Quiz einbetten (diese beiden Zeilen in deinen Ghost-Artikel) -->
+<!-- Quiz einbetten -->
 <div class="dmun-quiz" data-quiz-id="${id}" data-api-url="${API}"></div>
 <script src="${API}/static/quiz-widget.js"><\/script>`;
   card.innerHTML = `
-    <p style="margin-bottom:.75rem;font-size:.9rem">Diesen Code in einen Ghost-Artikel über <strong>HTML-Karte</strong> einfügen:</p>
+    <p style="font-size:.875rem;margin-bottom:.75rem;color:var(--muted)">
+      Diesen Code in einen Ghost-Artikel über <strong>HTML-Karte</strong> einfügen:
+    </p>
     <div class="embed-box">${esc(code)}</div>
     <button class="btn btn-ghost btn-sm mt-2" onclick="navigator.clipboard.writeText(${JSON.stringify(code)}).then(()=>toast('Code kopiert'))">
       📋 Kopieren
     </button>`;
-});
-
-/* ── Utils ───────────────────────────────────────────────────────────────── */
-function esc(str) {
-  const d=document.createElement("div"); d.textContent=String(str||""); return d.innerHTML;
 }
 
-/* ── Polls ───────────────────────────────────────────────────────────────── */
-let polls = [];
-let editingPollId = null;
+function renderPollEmbed() {
+  const id   = document.getElementById("embed-poll-select").value;
+  const card = document.getElementById("embed-poll-card");
+  if (!id) { card.innerHTML='<p class="empty" style="padding:1.5rem">Bitte eine Umfrage wählen</p>'; return; }
+  const code = `<div class="dmun-poll" data-poll-id="${id}" data-api-url="${API}"></div>\n<script src="${API}/static/poll-widget.js"><\/script>`;
+  card.innerHTML = `
+    <p style="font-size:.875rem;margin-bottom:.75rem;color:var(--muted)">
+      Diesen Code in einen Ghost-Artikel über <strong>HTML-Karte</strong> einfügen:
+    </p>
+    <div class="embed-box">${esc(code)}</div>
+    <button class="btn btn-ghost btn-sm mt-2" onclick="navigator.clipboard.writeText(${JSON.stringify(code)}).then(()=>toast('Code kopiert'))">
+      📋 Kopieren
+    </button>`;
+}
 
+function renderEmbedMemeCodes() {
+  const cols  = document.getElementById("embed-meme-cols")?.value  || "3";
+  const title = document.getElementById("embed-meme-title")?.value || "Meme-Galerie";
+  const token = document.getElementById("embed-meme-token")?.value || "";
+
+  const galleryCode =
+`<div class="dmun-memes"
+     data-api-url="${API}"
+     data-columns="${cols}">
+</div>
+<script src="${API}/static/meme-gallery.js"><\/script>`;
+
+  const uploadCode =
+`<div class="dmun-mu"
+     data-api-url="${API}"
+     data-title="${esc(title)}"
+     data-columns="${cols}"${token ? `\n     data-upload-token="${esc(token)}"` : ""}>
+</div>
+<script src="${API}/static/meme-upload-gallery.js"><\/script>`;
+
+  const g = document.getElementById("embed-meme-gallery-code");
+  const u = document.getElementById("embed-meme-upload-code");
+  if (g) g.textContent = galleryCode;
+  if (u) u.textContent = uploadCode;
+}
+
+document.querySelector('.tab-btn[data-tab="embed"]').addEventListener("click", () => {
+  renderEmbedMemeCodes();
+});
+
+/* ── Polls ───────────────────────────────────────────────────────────────── */
 function showPollView(name) {
   ["list","editor","results"].forEach(v =>
     document.getElementById("polls-"+v+"-view").style.display = v === name ? "" : "none"
@@ -744,6 +1078,7 @@ async function loadPolls() {
   const res = await fetch(API+"/api/admin/polls", {headers:headers()});
   polls = await res.json();
   renderPollList();
+  populateSelects();
 }
 
 function renderPollList() {
@@ -759,11 +1094,11 @@ function renderPollList() {
       return `
         <div class="poll-bar-row">
           <div class="poll-bar-label">
-            <span style="${isTop ? 'font-weight:700;color:var(--pri)' : ''}">${esc(o.option_text)}</span>
+            <span style="${isTop?'font-weight:700;color:var(--pri)':''}">${esc(o.option_text)}</span>
             <span style="flex-shrink:0;font-size:.8rem;color:var(--muted)">${o.votes} Stimmen (${pct}%)</span>
           </div>
           <div class="poll-bar-track">
-            <div class="poll-bar-fill" style="width:${w}%;${isTop ? 'background:var(--pri)' : ''}"></div>
+            <div class="poll-bar-fill" style="width:${w}%;${isTop?'background:var(--pri)':''}"></div>
           </div>
         </div>`;
     }).join("");
@@ -774,8 +1109,8 @@ function renderPollList() {
           <div class="poll-card__info">
             <div class="poll-card__title">
               ${esc(p.title)}
-              <span class="poll-status poll-status--${p.active ? 'open' : 'closed'}">${p.active ? 'Offen' : 'Geschlossen'}</span>
-              ${p.multiple ? '<span class="badge" style="background:#7d3c98">Mehrfach</span>' : ''}
+              <span class="poll-status poll-status--${p.active?'open':'closed'}">${p.active?'Offen':'Geschlossen'}</span>
+              ${p.multiple?'<span class="badge" style="background:#7d3c98">Mehrfach</span>':''}
             </div>
             <div class="poll-card__meta">
               ID: ${p.id} &bull; ${p.options.length} Optionen &bull;
@@ -784,11 +1119,11 @@ function renderPollList() {
           </div>
           <div class="poll-card__actions">
             <span class="poll-card__votes">${p.total_votes} Stimmen</span>
-            <button class="btn btn-ghost btn-sm" onclick="openPollResults(${p.id})">Einbetten</button>
+            <button class="btn btn-ghost btn-sm" onclick="openPollEmbedFromList(${p.id})">Einbetten</button>
             <button class="btn btn-ghost btn-sm" onclick="openPollEditor(${p.id})">Bearbeiten</button>
             <button class="btn btn-ghost btn-sm" onclick="togglePoll(${p.id})"
-              style="color:${p.active ? 'var(--err)' : 'var(--ok)'}">
-              ${p.active ? 'Schließen' : 'Öffnen'}
+              style="color:${p.active?'var(--err)':'var(--ok)'}">
+              ${p.active?'Schließen':'Öffnen'}
             </button>
             <button class="btn btn-danger btn-sm" onclick="deletePoll(${p.id},'${esc(p.title)}')">Löschen</button>
           </div>
@@ -823,29 +1158,29 @@ async function openPollEditor(id) {
   editingPollId = id;
   document.getElementById("poll-editor-heading").textContent = "Bearbeiten: "+poll.title;
   document.getElementById("poll-title").value = poll.title;
-  document.getElementById("poll-desc").value = poll.description || "";
-  document.getElementById("poll-slug").value = poll.ghost_slug || "";
+  document.getElementById("poll-desc").value = poll.description||"";
+  document.getElementById("poll-slug").value = poll.ghost_slug||"";
   document.getElementById("poll-multiple").checked = !!poll.multiple;
   document.getElementById("poll-show-before").checked = !!poll.show_results_before_vote;
-  document.getElementById("poll-thankyou").value = poll.thank_you_text || "";
+  document.getElementById("poll-thankyou").value = poll.thank_you_text||"";
   document.getElementById("poll-options-container").innerHTML = "";
   poll.options.forEach(o => addPollOption(o.option_text));
   showPollView("editor");
 }
 
-function addPollOption(text = "") {
+function addPollOption(text="") {
   const wrap = document.getElementById("poll-options-container");
   const div = document.createElement("div");
   div.className = "poll-option-input";
   div.innerHTML = `
-    <span style="color:var(--muted);font-size:.8rem;min-width:1.4rem">${wrap.children.length + 1}.</span>
+    <span style="color:var(--muted);font-size:.8rem;min-width:1.4rem">${wrap.children.length+1}.</span>
     <input type="text" placeholder="Antwortmöglichkeit…" value="${esc(text)}">
     <button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove();renumberOptions()">✕</button>`;
   wrap.appendChild(div);
 }
 
 function renumberOptions() {
-  document.querySelectorAll("#poll-options-container .poll-option-input").forEach((el, i) => {
+  document.querySelectorAll("#poll-options-container .poll-option-input").forEach((el,i) => {
     el.querySelector("span").textContent = (i+1)+".";
   });
 }
@@ -896,8 +1231,17 @@ async function deletePoll(id, title) {
   await loadPolls();
 }
 
+function openPollEmbedFromList(id) {
+  const sel = document.getElementById("embed-poll-select");
+  sel.value = id;
+  switchTab("embed");
+  selectEmbedType("poll");
+  renderPollEmbed();
+}
+
 async function openPollResults(id) {
-  const poll = polls.find(p => p.id === id) || await fetch(API+"/api/admin/poll/"+id, {headers:headers()}).then(r=>r.json());
+  const poll = polls.find(p => p.id===id)
+    || await fetch(API+"/api/admin/poll/"+id, {headers:headers()}).then(r=>r.json());
   document.getElementById("poll-results-heading").textContent = "Einbetten: "+poll.title;
   const embedCode = `<div class="dmun-poll" data-poll-id="${poll.id}" data-api-url="${API}"></div>\n<script src="${API}/static/poll-widget.js"><\/script>`;
   const card = document.getElementById("poll-results-card");
@@ -913,12 +1257,9 @@ async function openPollResults(id) {
   showPollView("results");
 }
 
-// Load polls when tab is opened
 document.querySelector('.tab-btn[data-tab="polls"]').addEventListener("click", loadPolls);
 
 /* ── Memes ───────────────────────────────────────────────────────────────── */
-let memes = [];
-
 async function loadMemes() {
   const res = await fetch(API+"/api/admin/memes", {headers:headers()});
   memes = await res.json();
@@ -927,16 +1268,13 @@ async function loadMemes() {
 }
 
 function renderPendingGrid() {
-  const pending = memes.filter(m => m.status === "pending");
+  const pending = memes.filter(m => m.status==="pending");
   const section = document.getElementById("pending-section");
   const grid    = document.getElementById("pending-grid");
   const badge   = document.getElementById("pending-badge");
-
   badge.textContent = pending.length;
   section.style.display = pending.length ? "" : "none";
-
-  if (!pending.length) { grid.innerHTML = ""; return; }
-
+  if (!pending.length) { grid.innerHTML=""; return; }
   grid.innerHTML = pending.map(m => `
     <div class="pending-card" id="pending-card-${m.id}">
       <img class="pending-card__img" src="${esc(m.url)}" alt="${esc(m.title)}" loading="lazy"
@@ -950,7 +1288,7 @@ function renderPendingGrid() {
 }
 
 function renderMemeGrid() {
-  const approved = memes.filter(m => m.status === "approved");
+  const approved = memes.filter(m => m.status==="approved");
   const grid = document.getElementById("meme-grid");
   document.getElementById("meme-count").textContent = approved.length ? `${approved.length} freigegeben` : "";
   if (!approved.length) { grid.innerHTML='<p class="empty" style="grid-column:1/-1">Noch keine freigegebenen Memes</p>'; return; }
@@ -967,28 +1305,23 @@ function renderMemeGrid() {
 
 async function approveMeme(id) {
   await fetch(API+"/api/admin/meme/"+id+"/approve", {method:"POST", headers:headers()});
-  toast("Meme freigegeben ✓");
-  await loadMemes();
+  toast("Meme freigegeben ✓"); await loadMemes();
 }
 
 async function rejectMeme(id) {
   if (!confirm("Meme ablehnen und löschen?")) return;
   await fetch(API+"/api/admin/meme/"+id+"/reject", {method:"POST", headers:headers()});
-  toast("Meme abgelehnt");
-  await loadMemes();
+  toast("Meme abgelehnt"); await loadMemes();
 }
 
 async function deleteMeme(id) {
   if (!confirm("Meme löschen?")) return;
   await fetch(API+"/api/admin/meme/"+id, {method:"DELETE", headers:headers()});
-  toast("Meme gelöscht");
-  await loadMemes();
+  toast("Meme gelöscht"); await loadMemes();
 }
 
-// Upload
 const uploadArea = document.getElementById("upload-area");
 const fileInput  = document.getElementById("meme-file-input");
-
 uploadArea.addEventListener("click", () => fileInput.click());
 uploadArea.addEventListener("dragover", e => { e.preventDefault(); uploadArea.classList.add("drag-over"); });
 uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("drag-over"));
@@ -997,7 +1330,6 @@ uploadArea.addEventListener("drop", e => {
   if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
 });
 fileInput.addEventListener("change", () => { if (fileInput.files.length) handleFiles(fileInput.files); });
-
 document.getElementById("btn-upload-meme").addEventListener("click", () => fileInput.click());
 
 async function handleFiles(files) {
@@ -1008,19 +1340,18 @@ async function handleFiles(files) {
   for (const file of files) {
     const fd = new FormData();
     fd.append("file", file);
-    fd.append("title", title || file.name.replace(/\.[^.]+$/, ""));
-    const res = await fetch(API+"/api/admin/meme", { method:"POST", headers:{"Authorization":"Basic "+auth}, body:fd });
+    fd.append("title", title || file.name.replace(/\.[^.]+$/,""));
+    const res = await fetch(API+"/api/admin/meme", {method:"POST", headers:{"Authorization":"Basic "+auth}, body:fd});
     if (res.ok) done++;
     status.textContent = `${done} / ${files.length} hochgeladen…`;
   }
   toast(`${done} Meme(s) hochgeladen`);
-  status.textContent = "";
-  document.getElementById("meme-title").value = "";
-  fileInput.value = "";
+  status.textContent="";
+  document.getElementById("meme-title").value="";
+  fileInput.value="";
   await loadMemes();
 }
 
-// Tab switch → load memes + render embed codes
 document.querySelector('.tab-btn[data-tab="memes"]').addEventListener("click", () => {
   loadMemes();
   renderMemeEmbedCodes();
@@ -1050,7 +1381,7 @@ function renderMemeEmbedCodes() {
 `<div class="dmun-mu"
      data-api-url="${API}"
      data-title="${esc(title)}"
-     data-columns="${cols}"${token ? `\n     data-upload-token="${esc(token)}"` : ""}>
+     data-columns="${cols}"${token?`\n     data-upload-token="${esc(token)}"`:""}>
 </div>
 <script src="${API}/static/meme-upload-gallery.js"><\/script>`;
 
@@ -1065,14 +1396,21 @@ function copyEmbed(elId) {
   navigator.clipboard.writeText(text).then(() => toast("Code kopiert"));
 }
 
-// Lightbox
+/* ── Lightbox ────────────────────────────────────────────────────────────── */
 function openLightbox(url) {
   document.getElementById("lightbox-img").src = url;
   document.getElementById("lightbox").classList.add("open");
 }
-document.getElementById("lightbox").addEventListener("click", () => document.getElementById("lightbox").classList.remove("open"));
-document.getElementById("lightbox-close").addEventListener("click", e => { e.stopPropagation(); document.getElementById("lightbox").classList.remove("open"); });
-document.addEventListener("keydown", e => { if (e.key==="Escape") document.getElementById("lightbox").classList.remove("open"); });
+document.getElementById("lightbox").addEventListener("click", () =>
+  document.getElementById("lightbox").classList.remove("open")
+);
+document.getElementById("lightbox-close").addEventListener("click", e => {
+  e.stopPropagation();
+  document.getElementById("lightbox").classList.remove("open");
+});
+document.addEventListener("keydown", e => {
+  if (e.key==="Escape") document.getElementById("lightbox").classList.remove("open");
+});
 </script>
 </body>
 </html>

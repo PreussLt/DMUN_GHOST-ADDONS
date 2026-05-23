@@ -128,6 +128,12 @@ def create_app():
             if is_correct:
                 score += 1
 
+            db.execute(
+                "INSERT INTO quiz_answer_log (quiz_id, question_id, answer_id, session_id, is_correct)"
+                " VALUES (?,?,?,?,?)",
+                (quiz_id, q["id"], given_id, session_id, int(is_correct)),
+            )
+
             feedback.append(
                 {
                     "question_id": q["id"],
@@ -164,7 +170,11 @@ def create_app():
     def api_list_quizzes():
         db = get_db()
         rows = db.execute(
-            "SELECT q.*, (SELECT COUNT(*) FROM questions WHERE quiz_id = q.id) AS question_count"
+            "SELECT q.*,"
+            " (SELECT COUNT(*) FROM questions WHERE quiz_id = q.id) AS question_count,"
+            " (SELECT COUNT(*) FROM quiz_results WHERE quiz_id = q.id) AS result_count,"
+            " (SELECT AVG(CAST(score AS FLOAT)/NULLIF(max_score,0)*100)"
+            "  FROM quiz_results WHERE quiz_id = q.id) AS avg_pct"
             " FROM quizzes q ORDER BY created_at DESC"
         ).fetchall()
         return jsonify([dict(r) for r in rows])
@@ -236,6 +246,66 @@ def create_app():
             (quiz_id,),
         ).fetchall()
         return jsonify([dict(r) for r in rows])
+
+    @app.route("/api/admin/quiz/<int:quiz_id>/analytics")
+    @require_auth
+    def api_quiz_analytics(quiz_id):
+        db = get_db()
+        quiz = db.execute("SELECT * FROM quizzes WHERE id = ?", (quiz_id,)).fetchone()
+        if not quiz:
+            return jsonify({"error": "Nicht gefunden"}), 404
+
+        results = db.execute(
+            "SELECT score, max_score FROM quiz_results WHERE quiz_id = ?", (quiz_id,)
+        ).fetchall()
+
+        if not results:
+            return jsonify({
+                "sessions": 0, "avg_pct": 0, "min_score": 0, "max_score_val": 0,
+                "max_score_possible": 0, "score_distribution": [], "question_stats": []
+            })
+
+        scores = [r["score"] for r in results]
+        max_possible = results[0]["max_score"] if results else 0
+        avg_pct = round(
+            sum(r["score"] / r["max_score"] * 100 if r["max_score"] else 0 for r in results)
+            / len(results), 1
+        )
+
+        dist: dict[int, int] = {}
+        for r in results:
+            dist[r["score"]] = dist.get(r["score"], 0) + 1
+        score_distribution = [{"score": k, "count": v} for k, v in sorted(dist.items())]
+
+        question_stats = []
+        questions = db.execute(
+            "SELECT id, question_text FROM questions WHERE quiz_id = ? ORDER BY position",
+            (quiz_id,),
+        ).fetchall()
+        for q in questions:
+            row = db.execute(
+                "SELECT SUM(is_correct) AS correct, COUNT(*) AS total"
+                " FROM quiz_answer_log WHERE question_id = ?",
+                (q["id"],),
+            ).fetchone()
+            if row and row["total"]:
+                question_stats.append({
+                    "question_id": q["id"],
+                    "question_text": q["question_text"],
+                    "correct": row["correct"] or 0,
+                    "wrong": (row["total"] or 0) - (row["correct"] or 0),
+                    "total": row["total"] or 0,
+                })
+
+        return jsonify({
+            "sessions": len(results),
+            "avg_pct": avg_pct,
+            "min_score": min(scores),
+            "max_score_val": max(scores),
+            "max_score_possible": max_possible,
+            "score_distribution": score_distribution,
+            "question_stats": question_stats,
+        })
 
     # -----------------------------------------------------------------------
     # Meme Gallery API
@@ -609,6 +679,16 @@ def _init_db(app):
                 option_id  INTEGER NOT NULL REFERENCES poll_options(id) ON DELETE CASCADE,
                 session_id TEXT,
                 voted_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS quiz_answer_log (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                quiz_id     INTEGER NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+                question_id INTEGER NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
+                answer_id   INTEGER,
+                session_id  TEXT,
+                is_correct  INTEGER DEFAULT 0,
+                logged_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
             """
         )
