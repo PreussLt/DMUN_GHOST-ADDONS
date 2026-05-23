@@ -28,25 +28,25 @@
 
 /* ── Outer Card ──────────────────────────────────────────── */
 .dmun-quiz__inner {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  overflow: visible;
+  background: #f8fafc;
+  border: 1px solid var(--dmun-border);
+  border-radius: var(--dmun-radius);
+  box-shadow: var(--dmun-shadow);
+  overflow: hidden;
 }
 
 /* ── Header ──────────────────────────────────────────────── */
 .dmun-quiz__header {
   background: var(--dmun-primary);
   color: #fff;
-  padding: 1.5rem 2rem;
-  border-radius: var(--dmun-radius);
-  margin-bottom: 2rem;
-  box-shadow: var(--dmun-shadow);
+  padding: 2rem 2.5rem;
+  margin-bottom: 0;
+  border-radius: 0;
 }
 
 .dmun-quiz__title {
-  margin: 0 0 .3rem;
-  font-size: 2.2rem;
+  margin: 0 0 .5rem;
+  font-size: 2.4rem;
   font-weight: 800;
   letter-spacing: -.01em;
 }
@@ -55,14 +55,15 @@
   margin: 0;
   opacity: .9;
   font-size: 1.6rem;
+  line-height: 1.5;
 }
 
 /* ── Form Container ──────────────────────────────────────── */
 .dmun-quiz__form {
-  padding: 0;
+  padding: 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 2.5rem;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -71,15 +72,16 @@
 
 .dmun-quiz__question {
   background: #ffffff;
-  border: 1px solid var(--dmun-border);
+  border: 1.5px solid #cbd5e1; /* Etwas dunklerer Rahmen */
   border-radius: var(--dmun-radius);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
   overflow: hidden;
   transition: transform .2s, box-shadow .2s;
 }
 
 .dmun-quiz__question:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, .08);
+  border-color: var(--dmun-accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
 }
 
 /* Farbiger Top-Balken als Statusindikator */
@@ -274,17 +276,15 @@
 
 /* ── Ergebnis-Block ──────────────────────────────────────── */
 .dmun-quiz__result {
-  margin-top: 2.5rem;
-  padding: 2.5rem;
+  margin: 0;
+  padding: 3rem 2.5rem;
   text-align: center;
-  background: #fff;
-  border: 1px solid var(--dmun-border);
-  border-radius: var(--dmun-radius);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, .05);
+  background: #ffffff;
+  border-top: 1px solid var(--dmun-border);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 1.5rem;
 }
 
 .dmun-quiz__result-emoji { font-size: 5rem; line-height: 1; }
