@@ -8,28 +8,144 @@
 
   const NS = "dmun-poll";
 
-  // ── CSS laden ─────────────────────────────────────────────────────────────
-  // Bevorzugt die externe poll-widget.css (kein CSP-Problem).
-  // Fallback: minimale Inline-Stile damit das Widget sichtbar bleibt.
+  // --- Dynamic CSS Injection ---
+  const style = document.createElement("style");
+  style.textContent = `
+:root {
+  --dp-primary: #0C4695;
+  --dp-accent:  #1a5ea8;
+  --dp-correct: #1e8449;
+  --dp-border:  #d5dde5;
+  --dp-bg:      #f8fafc;
+  --dp-radius:  10px;
+}
+.dmun-poll {
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  font-size: 1.6rem !important;
+  line-height: 1.6 !important;
+  color: #15171a !important;
+  max-width: 640px !important;
+  margin: 4rem auto !important;
+  display: block !important;
+}
+div.dmun-poll .dmun-poll__inner {
+  background: #ffffff !important;
+  border: 1px solid var(--dp-border) !important;
+  border-radius: var(--dp-radius) !important;
+  overflow: hidden !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, .08) !important;
+  display: block !important;
+}
+div.dmun-poll .dmun-poll__header {
+  background: var(--dp-primary) !important;
+  color: #ffffff !important;
+  padding: 1.5rem 2rem !important;
+  display: block !important;
+}
+div.dmun-poll .dmun-poll__title {
+  margin: 0 0 .5rem !important;
+  font-size: 2.2rem !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  color: #ffffff !important;
+}
+div.dmun-poll .dmun-poll__desc {
+  margin: 0 !important;
+  opacity: .9 !important;
+  font-size: 1.6rem !important;
+  color: #ffffff !important;
+}
+div.dmun-poll .dmun-poll__body {
+  padding: 2.5rem !important;
+  display: block !important;
+}
+div.dmun-poll .dmun-poll__options {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important; /* Deutlicherer Abstand zwischen den Optionen */
+  margin-bottom: 2rem !important;
+}
+div.dmun-poll .dmun-poll__option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.2rem !important;
+  padding: 1.25rem 1.5rem !important;
+  border: 1.5px solid var(--dp-border) !important;
+  border-radius: var(--dp-radius) !important;
+  cursor: pointer !important;
+  transition: all .15s !important;
+  background: #ffffff !important;
+  margin: 0 !important;
+}
+div.dmun-poll .dmun-poll__option:hover {
+  background: #f0f7ff !important;
+  border-color: var(--dp-accent) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+}
+div.dmun-poll .dmun-poll__option input {
+  accent-color: var(--dp-accent) !important;
+  width: 1.4em !important;
+  height: 1.4em !important;
+  margin: 0 !important;
+}
+div.dmun-poll .dmun-poll__option-text {
+  font-size: 1.7rem !important;
+  font-weight: 500 !important;
+  color: #15171a !important;
+}
+div.dmun-poll .dmun-poll__vote-btn {
+  display: inline-block !important;
+  padding: 1.2rem 3rem !important;
+  background: var(--dp-accent) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: var(--dp-radius) !important;
+  font-size: 1.7rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all .15s !important;
+  box-shadow: 0 4px 12px rgba(26, 94, 168, 0.3) !important;
+}
+div.dmun-poll .dmun-poll__vote-btn:hover {
+  background: var(--dp-primary) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(12, 70, 149, 0.4) !important;
+}
+div.dmun-poll .dmun-poll__bar-row {
+  margin-bottom: 1.5rem !important;
+}
+div.dmun-poll .dmun-poll__bar-label {
+  display: flex !important;
+  justify-content: space-between !important;
+  margin-bottom: .6rem !important;
+  font-size: 1.6rem !important;
+  font-weight: 600 !important;
+}
+div.dmun-poll .dmun-poll__bar-track {
+  height: 28px !important;
+  background: #e2e8f0 !important;
+  border-radius: 99px !important;
+  overflow: hidden !important;
+}
+div.dmun-poll .dmun-poll__bar-fill {
+  height: 100% !important;
+  background: var(--dp-accent) !important;
+  transition: width .8s cubic-bezier(.4, 0, .2, 1) !important;
+}
+@media (max-width: 540px) {
+  .dmun-poll { margin: 2rem auto !important; }
+  div.dmun-poll .dmun-poll__body { padding: 1.5rem !important; }
+}
+  `;
+  document.head.appendChild(style);
 
-  function ensureStyles(apiUrl) {
-    if (document.getElementById("dmun-poll-style")) return;
-
-    // Externe CSS-Datei verlinken (gleiche Origin wie die API)
-    const link = document.createElement("link");
-    link.id   = "dmun-poll-style";
-    link.rel  = "stylesheet";
-    link.href = apiUrl + "/static/poll-widget.css";
-    document.head.appendChild(link);
-  }
+  // -------------------------------------------------------------------------
 
   // ── Widget-Instanz ─────────────────────────────────────────────────────────
 
   function initPoll(container) {
     const pollId = container.dataset.pollId;
     const apiUrl = (container.dataset.apiUrl || "").replace(/\/$/, "");
-
-    ensureStyles(apiUrl);
 
     const SID_KEY = "dmun_poll_sid_" + pollId;
     const sessionId = sessionStorage.getItem(SID_KEY) || (function () {
